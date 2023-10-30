@@ -1,5 +1,7 @@
 from datetime import datetime as dt
 from flask_restful import Resource, request
+from flask import send_file
+import zipfile
 
 from application.database import db
 from application.models import *
@@ -301,8 +303,9 @@ class Creator_Account_Origin_API(Resource):
         """Converts a melophile or patron into creator."""
         user_obj = Users.query.filter_by(id=id).first()
         if user_obj:
-            user_obj.roles.append("creator")
-            db.session.commit()
+            if "creator" not in user_obj.roles:
+                user_obj.roles.append("creator")
+                db.session.commit()
             return "Time to shine on Spotlight with your creations", 200
         else:
             raise NotFound(status_code=404, error_message="User not found")
@@ -537,3 +540,360 @@ class Creator_Song_API(Resource):
         else:
             raise NotFound(status_code=404, error_message="Song not found")
 
+
+class Creator_Genre_Req_API(Resource):
+    @roles_required("creator")
+    @auth_required("token")
+    def post(self):
+        """Creates a genre request."""
+        form_data = request.get_json()
+        genre_obj = Genre()
+        genre_obj.genre = form_data.get("genre")
+        genre_obj.requested_by = current_user.id
+        db.session.add(genre_obj)
+        db.session.commit()
+        return "Genre request created", 200
+
+
+### Common APIs
+
+
+class Common_Song_Play_API(Resource):
+    @auth_required("token")
+    def get(self, id):
+        # Todo
+        return "Song played", 200
+
+
+class Common_Albums_By_Creator_API(Resource):
+    @auth_required("token")
+    def get(self, id):
+        """Fetches all albums of a creator."""
+        albums = Albums.query.filter_by(creator_id=id).all()
+        if albums:
+            return_json = {}
+            for album in albums:
+                return_json[album.id] = {
+                    "album_name": album.album_name,
+                    "cover_image": album.cover_image,
+                    "artists": album.artists_names,
+                    "no_of_songs": album.album_songs.count(),
+                }
+            return json.dumps(return_json), 200
+        else:
+            return "No albums found", 200
+
+
+class Common_Playlists_By_User_API(Resource):
+    @auth_required("token")
+    def get(self, id):
+        """Fetches all playlists of a user."""
+        playlists = Playlists.query.filter_by(user_id=id).all()
+        if playlists:
+            return_json = {}
+            for playlist in playlists:
+                return_json[playlist.id] = {
+                    "playlist_name": playlist.playlist_name,
+                    "cover_image": playlist.cover_image,
+                    "no_of_songs": playlist.playlist_songs.count(),
+                }
+            return json.dumps(return_json), 200
+        else:
+            return "No playlists found", 200
+
+    @auth_required("token")
+    def get(self, playlist_id):
+        """Fetches all songs of a playlist."""
+        playlist_obj = Playlists.query.filter_by(id=playlist_id).first()
+        if playlist_obj:
+            if playlist_obj.user_id == current_user.id:
+                return_json = {}
+                for song in playlist_obj.playlist_songs:
+                    return_json[song.id] = {
+                        "song_id": song.song_id,
+                        "song_name": song.song_info.name,
+                        "cover_image": song.song_info.cover_image,
+                        "album_name": song.song_info.song_album_info.album_name,
+                        "artists": song.song_info.song_album_info.artists_names,
+                    }
+                return json.dumps(return_json), 200
+            else:
+                raise Unauthorized(error_message="you cannot view this playlist")
+        else:
+            raise NotFound(status_code=404, error_message="Playlist not found")
+
+    @auth_required("token")
+    def post(self):
+        """Creates a playlist."""
+        form_data = request.form()
+        playlist_obj = Playlists()
+        playlist_obj.user_id = current_user.id
+        playlist_obj.playlist_name = form_data.get("playlist_name")
+        cover_image_file = form_data.files.get("cover_image")
+        cover_image_file_filename = cover_image_file.filename + dt.now().strftime(
+            "%Y_%m_%d_%H_%M_%S"
+        )
+        try:
+            cover_image_file.save(
+                os.path.join(
+                    pwd, "../static", "Playlist_Images", cover_image_file_filename
+                )
+            )
+            playlist_obj.cover_image = cover_image_file_filename
+        except:
+            raise InternalServerError(
+                status_code=500,
+                error_code="sav_file_e",
+                error_message="Error saving cover image file",
+            )
+        db.session.add(playlist_obj)
+        db.session.commit()
+        return "Playlist created", 200
+
+    @auth_required("token")
+    def put(self, id):
+        """Edits a playlist."""
+        form_data = request.form()
+        playlist_obj = Playlists.query.filter_by(id=id).first()
+        if playlist_obj:
+            if playlist_obj.user_id == current_user.id:
+                playlist_obj.playlist_name = form_data.get("playlist_name")
+                cover_image_file = form_data.files.get("cover_image")
+                if (
+                    cover_image_file
+                    and playlist_obj.cover_image != cover_image_file.filename
+                ):
+                    cover_image_file_filename = (
+                        cover_image_file.filename
+                        + dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+                    )
+                    try:
+                        cover_image_file.save(
+                            os.path.join(
+                                pwd,
+                                "../static",
+                                "Playlist_Images",
+                                cover_image_file_filename,
+                            )
+                        )
+                        os.remove(
+                            os.path.join(
+                                pwd,
+                                "../static",
+                                "Playlist_Images",
+                                playlist_obj.cover_image,
+                            )
+                        )
+                        playlist_obj.cover_image = cover_image_file_filename
+                    except:
+                        raise InternalServerError(
+                            status_code=500,
+                            error_code="sav_file_e",
+                            error_message="Error saving cover image file",
+                        )
+                db.session.commit()
+                return "Playlist edited", 200
+            else:
+                raise Unauthorized(error_message="you cannot edit this playlist")
+        else:
+            raise NotFound(status_code=404, error_message="Playlist not found")
+
+    @auth_required("token")
+    def delete(self, playlist_id, song_id):
+        """Removes a song from a playlist."""
+        playlist_obj = Playlists.query.filter_by(id=playlist_id).first()
+        if playlist_obj:
+            if playlist_obj.user_id == current_user.id:
+                playlist_song_obj = PlaylistSongs.query.filter_by(
+                    playlist_id=playlist_id, song_id=song_id
+                ).first()
+                if playlist_song_obj:
+                    db.session.delete(playlist_song_obj)
+                    db.session.commit()
+                    return "Song removed from playlist", 200
+                else:
+                    raise NotFound(
+                        status_code=404, error_message="Song not found in playlist"
+                    )
+            else:
+                raise Unauthorized(error_message="you cannot delete this playlist")
+        else:
+            raise NotFound(status_code=404, error_message="Playlist not found")
+
+    @auth_required("token")
+    def delete(self, playlist_id):
+        """Deletes a playlist."""
+        playlist_obj = Playlists.query.filter_by(id=playlist_id).first()
+        if playlist_obj:
+            if playlist_obj.user_id == current_user.id:
+                playlist_songs_objs_to_be_deleted = PlaylistSongs.query.filter_by(
+                    playlist_id=playlist_id
+                ).all()
+                for playlist_song in playlist_songs_objs_to_be_deleted:
+                    db.session.delete(playlist_song)
+                db.session.delete(playlist_obj)
+                db.session.commit()
+                return "Playlist deleted", 200
+            else:
+                raise Unauthorized(error_message="you cannot delete this playlist")
+        else:
+            raise NotFound(status_code=404, error_message="Playlist not found")
+
+
+class Common_Search_API(Resource):
+    @auth_required("token")
+    def get(self):
+        """Returns url for the song file."""
+        song_id = request.args.get("song_id")
+        song_obj = Songs.query.filter_by(id=song_id).first()
+        if song_obj:
+            return os.path.join(os.getenv("BACKEND_URL"), "../static", "songs", song_obj.song_url), 200
+        else:
+            raise NotFound(status_code=404, error_message="Song not found")
+
+
+### Patron APIs
+
+class Patron_Download_API(Resource):
+    @roles_required("patron")
+    @auth_required("token")
+    def get(self):
+        """Downloads a song or songs in an album."""
+        song_id = request.args.get("song_id")
+        album_id = request.args.get("album_id")
+        if song_id:
+            song_obj = Songs.query.filter_by(id=song_id).first()
+            if song_obj:
+                if song_obj.song_url:
+                    return send_file(
+                        os.path.join(pwd, "../static", "songs", song_obj.song_url),
+                        as_attachment=True,
+                    )
+                else:
+                    raise NotFound(status_code=404, error_message="Song not found")
+            else:
+                raise NotFound(status_code=404, error_message="Song not found")
+        elif album_id:
+            album_obj = Albums.query.filter_by(id=album_id).first()
+            if album_obj:
+                zip_file = zipfile.ZipFile(
+                    os.path.join(
+                        pwd, "../static", "Albums", album_obj.album_name + ".zip"
+                    ),
+                    "w",
+                )
+                for song in album_obj.album_songs:
+                    if song.song_url:
+                        zip_file.write(
+                            os.path.join(pwd, "../static", "songs", song.song_url)
+                        )
+                    else:
+                        raise NotFound(status_code=404, error_message="Song not found")
+                zip_file.close()
+                return send_file(
+                    os.path.join(
+                        pwd, "../static", "Albums", album_obj.album_name + ".zip"
+                    ),
+                    as_attachment=True,
+                )
+            else:
+                raise NotFound(status_code=404, error_message="Album not found")
+        else:
+            raise BadRequest(error_message="Missing arguments, please include song_id or album_id")
+
+
+class Patron_Subscribe_API(Resource):
+    @roles_accepted("melophile", "admin")
+    @auth_required("token")
+    def post(self, id):
+        """Converts a melophile into patron."""
+        user_obj = Users.query.filter_by(id=id).first()
+        if user_obj:
+            if "patron" not in user_obj.roles:
+                user_obj.roles.append("patron")
+                db.session.commit()
+            return "You are now a patron", 200
+        else:
+            raise NotFound(status_code=404, error_message="User not found")
+        
+
+### Melophile APIs
+
+class Melophile_User_Account_API(Resource):
+    def post(self):
+        """Creates a Melophile account on Spotlight."""
+        form_data = request.get_json()
+        username= form_data.get("username")
+        email= form_data.get("email")
+        password=hash_password(form_data.get("password"))
+        melophile_role = user_datastore.find_role("melophile")
+        user_datastore.create_user(username=username, email=email, password=password, roles=[melophile_role])
+        db.session.commit()
+        return "Melophile account created", 200
+    
+class Melophile_Flag_Song_API(Resource):
+    def post(self, id):
+        """Flags a song"""
+        form_data = request.get_json()
+        reason = form_data.get("reason")
+        song_obj = Songs.query.filter_by(id=id).first()
+        if song_obj:
+            song_flag_obj = SongsFlagged()
+            song_flag_obj.song_id = id
+            song_flag_obj.melophile_id = current_user.id
+            song_flag_obj.reason = reason
+            db.session.add(song_flag_obj)
+            db.session.commit()
+            return "Song flagged", 200
+        else:
+            raise NotFound(status_code=404, error_message="Song not found")
+        
+class Melophile_Flag_Album_API(Resource):
+    def post(self, id):
+        """Flags an album"""
+        form_data = request.get_json()
+        reason = form_data.get("reason")
+        album_obj = Albums.query.filter_by(id=id).first()
+        if album_obj:
+            album_flag_obj = AlbumsFlagged()
+            album_flag_obj.album_id = id
+            album_flag_obj.melophile_id = current_user.id
+            album_flag_obj.reason = reason
+            db.session.add(album_flag_obj)
+            db.session.commit()
+            return "Album flagged", 200
+        else:
+            raise NotFound(status_code=404, error_message="Album not found")
+        
+class Melophile_Rate_Song_API(Resource):
+    @roles_accepted("melophile", "patron")
+    @auth_required("token")
+    def post(self, id):
+        """Rates a song"""
+        form_data = request.get_json()
+        rating = form_data.get("rating")
+        song_obj = Songs.query.filter_by(id=id).first()
+        if song_obj:
+            song_rating_obj = SongRatings()
+            song_rating_obj.song_id = id
+            song_rating_obj.user_id = current_user.id
+            song_rating_obj.rating = rating
+            db.session.add(song_rating_obj)
+            db.session.commit()
+            return "Thank you for giving feedback on the song", 200
+        else:
+            raise NotFound(status_code=404, error_message="Song not found")
+        
+class Melophile_Lyrics_API(Resource):
+    @auth_required("token")
+    def get(self):
+        """returns a link to file containing lyrics of a song"""
+        song_id = request.args.get("song_id")
+        song_obj = Songs.query.filter_by(id=song_id).first()
+        if song_obj:
+            if song_obj.lyrics_url:
+                return os.path.join(os.getenv("BACKEND_URL"), "../static", "lyrics", song_obj.lyrics_url),
+            else:
+                raise NotFound(status_code=404, error_message="Lyrics not found")
+        else:
+            raise NotFound(status_code=404, error_message="Song not found")

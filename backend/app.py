@@ -11,7 +11,7 @@ admin_role = app.security.datastore.find_or_create_role(
 )
 
 sub_role = app.security.datastore.find_or_create_role(
-    name="patron", description="can download songs and don't bother about advertisements in bewteen playlists"
+    name="patron", description="can download songs and don't bother about advertisements in between playlists"
 )
 
 creator_role = app.security.datastore.find_or_create_role(
