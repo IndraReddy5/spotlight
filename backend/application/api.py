@@ -230,7 +230,7 @@ class Remove_Song_API(Resource):
                 # Trigger a cron job, sending a notification to creator and users who have added the song to their playlists
                 return "Song removed", 200
             else:
-                raise Unauthorized(error_message="you cannnot delete this song")
+                raise Unauthorized(error_message="you cannot delete this song")
         else:
             raise NotFound(status_code=404, error_message="Song not found")
 
@@ -286,7 +286,7 @@ class Remove_Album_API(Resource):
                 # Trigger a cron job, sending a notification to creator and users who have added the album songs to their playlists
                 return "Album removed", 200
             else:
-                raise Unauthorized(error_message="you cannnot delete this album")
+                raise Unauthorized(error_message="you cannot delete this album")
         else:
             raise NotFound(status_code=404, error_message="Album not found")
 
@@ -382,7 +382,7 @@ class Creator_Album_API(Resource):
                 db.session.commit()
                 return "Album edited", 200
             else:
-                raise Unauthorized(error_message="you cannnot edit this album")
+                raise Unauthorized(error_message="you cannot edit this album")
         else:
             raise NotFound(status_code=404, error_message="Album not found")
 
@@ -391,6 +391,7 @@ class Creator_Song_API(Resource):
     @roles_required("creator")
     @auth_required("token")
     def post(self):
+        """Creates a song."""
         form_data = request.form()
         song_obj = Songs()
         song_obj.album_id = form_data.get("album_id")
@@ -435,6 +436,7 @@ class Creator_Song_API(Resource):
     @roles_required("creator")
     @auth_required("token")
     def put(self, id):
+        """Edits song details."""
         form_data = request.form()
         song_obj = Songs.query.filter_by(id=id).first()
         if song_obj:
