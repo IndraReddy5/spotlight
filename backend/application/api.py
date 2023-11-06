@@ -827,8 +827,13 @@ class Melophile_User_Account_API(Resource):
         email= form_data.get("email")
         password=hash_password(form_data.get("password"))
         melophile_role = user_datastore.find_role("melophile")
-        user_datastore.create_user(username=username, email=email, password=password, roles=[melophile_role])
-        db.session.commit()
+        if user_datastore.find_user(username=username):
+            raise ValidationError(status_code=400, error_code="usr_1", error_message="A user exists with same username, please pick other username")
+        elif user_datastore.find_user(email=email):
+            raise ValidationError(status_code=400, error_code="usr_2", error_message="You have account with same email, if you forgot account details contact support@spotlight.in")
+        else:
+            user_datastore.create_user(username=username, email=email, password=password, roles=[melophile_role])
+            db.session.commit()
         return "Melophile account created", 200
     
 class Melophile_Flag_Song_API(Resource):
