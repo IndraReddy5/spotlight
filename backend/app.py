@@ -1,13 +1,12 @@
-from create_app import create_app, db
+from create_app import *
 from flask_security import hash_password
 
 app = create_app()
 app.app_context().push()
 db.create_all()
 
-
 admin_role = app.security.datastore.find_or_create_role(
-    name="admin", description="can create, delete, update shows and venues"
+    name="admin", description="can approve creators and maintain the whole application"
 )
 
 sub_role = app.security.datastore.find_or_create_role(

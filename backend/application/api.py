@@ -63,7 +63,9 @@ class Admin_Genre_API(Resource):
                 return_json[genre.id] = {
                     "genre": genre.genre,
                     "creator_id": genre.requested_by,
-                    "creator_name": genre.user_info.username,
+                    "creator_name": Users.query.filter_by(id=genre.requested_by)
+                    .first()
+                    .username,
                 }
             return json.dumps(return_json), 200
         else:
@@ -299,13 +301,12 @@ class Remove_Album_API(Resource):
 class Creator_Account_Origin_API(Resource):
     @roles_accepted("patron", "melophile", "admin")
     @auth_required("token")
-    def post(self, id):
+    def post(self, name):
         """Converts a melophile or patron into creator."""
-        user_obj = Users.query.filter_by(id=id).first()
+        user_obj = Users.query.filter_by(username=name).first()
         if user_obj:
-            if "creator" not in user_obj.roles:
-                user_obj.roles.append("creator")
-                db.session.commit()
+            user_datastore.add_role_to_user(user_obj, "creator")
+            db.session.commit()
             return "Time to shine on Spotlight with your creations", 200
         else:
             raise NotFound(status_code=404, error_message="User not found")
@@ -316,14 +317,14 @@ class Creator_Album_API(Resource):
     @auth_required("token")
     def post(self):
         """Creates an album."""
-        form_data = request.form()
+        form_data = request.form
         album_obj = Albums()
         album_obj.creator_id = current_user.id
         album_obj.artists_names = form_data.get("artists_names")
         album_obj.album_name = form_data.get("album_name")
-        cover_image_file = form_data.files.get("cover_image")
-        cover_image_file_filename = cover_image_file.filename + dt.now().strftime(
-            "%Y_%m_%d_%H_%M_%S"
+        cover_image_file = request.files["cover_image"]
+        cover_image_file_filename = (
+            dt.now().strftime("%Y_%m_%d_%H_%M_%S") + cover_image_file.filename
         )
         try:
             cover_image_file.save(
@@ -346,20 +347,19 @@ class Creator_Album_API(Resource):
     @auth_required("token")
     def put(self, id):
         """Edits Album Details."""
-        form_data = request.form()
+        form_data = request.form
         album_obj = Albums.query.filter_by(id=id).first()
         if album_obj:
             if album_obj.creator_id == current_user.id:
                 album_obj.artists_names = form_data.get("artists_names")
                 album_obj.album_name = form_data.get("album_name")
-                cover_image_file = form_data.files.get("cover_image")
+                cover_image_file = request.files.get("cover_image")
                 if (
                     cover_image_file
                     and album_obj.cover_image != cover_image_file.filename
                 ):
                     cover_image_file_filename = (
-                        cover_image_file.filename
-                        + dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+                        dt.now().strftime("%Y_%m_%d_%H_%M_%S") + cover_image_file.filename
                     )
                     try:
                         cover_image_file.save(
@@ -395,29 +395,33 @@ class Creator_Song_API(Resource):
     @auth_required("token")
     def post(self):
         """Creates a song."""
-        form_data = request.form()
+        form_data = request.form
         song_obj = Songs()
         song_obj.album_id = form_data.get("album_id")
         song_obj.name = form_data.get("name")
-        song_obj_cover_image_file = form_data.files.get("cover_image")
-        song_obj_audio_file = form_data.files.get("audio_file")
-        song_obj_lyrics_file = form_data.files.get("lyrics_file")
-        song_obj_cover_image_file_filename = (
-            song_obj_cover_image_file.filename + dt.now().strftime("%Y_%m_%d_%H_%M_%S")
-        )
-        song_obj_audio_file_filename = song_obj_audio_file.filename + dt.now().strftime(
-            "%Y_%m_%d_%H_%M_%S"
-        )
-        song_obj_lyrics_file_filename = (
-            song_obj_lyrics_file.filename + dt.now().strftime("%Y_%m_%d_%H_%M_%S")
-        )
-        try:
-            song_obj_cover_image_file.save(
-                os.path.join(
-                    pwd, "../static", "Song_Images", song_obj_cover_image_file_filename
-                )
+        song_obj_cover_image_file = None
+        if len(request.files) == 3:
+            song_obj_cover_image_file = request.files["cover_image"]
+        song_obj_audio_file = request.files["audio_file"]
+        song_obj_lyrics_file = request.files["lyrics_file"]
+        if song_obj_cover_image_file:
+            song_obj_cover_image_file_filename = (
+                dt.now().strftime("%Y_%m_%d_%H_%M_%S") + song_obj_cover_image_file.filename
             )
-            song_obj.cover_image = song_obj_cover_image_file_filename
+        song_obj_audio_file_filename = dt.now().strftime(
+            "%Y_%m_%d_%H_%M_%S"
+        ) + song_obj_audio_file.filename
+        song_obj_lyrics_file_filename = (
+            dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+        ) + song_obj_lyrics_file.filename
+        try:
+            if song_obj_cover_image_file:
+                song_obj_cover_image_file.save(
+                    os.path.join(
+                        pwd, "../static", "Song_Images", song_obj_cover_image_file_filename
+                    )
+                )
+                song_obj.cover_image = song_obj_cover_image_file_filename
             song_obj_audio_file.save(
                 os.path.join(pwd, "../static", "songs", song_obj_audio_file_filename)
             )
@@ -440,22 +444,22 @@ class Creator_Song_API(Resource):
     @auth_required("token")
     def put(self, id):
         """Edits song details."""
-        form_data = request.form()
+        form_data = request.form
         song_obj = Songs.query.filter_by(id=id).first()
         if song_obj:
             if song_obj.song_album_info.creator_id == current_user.id:
                 song_obj.name = form_data.get("name")
-                song_obj_cover_image_file = form_data.files.get("cover_image")
-                song_obj_audio_file = form_data.files.get("audio_file")
-                song_obj_lyrics_file = form_data.files.get("lyrics_file")
+                song_obj_cover_image_file = request.files["cover_image"]
+                song_obj_audio_file = request.files["audio_file"]
+                song_obj_lyrics_file = request.files["lyrics_file"]
                 if (
                     song_obj_cover_image_file
                     and song_obj.cover_image != song_obj_cover_image_file.filename
                 ):
                     try:
                         song_obj_cover_image_file_filename = (
-                            song_obj_cover_image_file.filename
-                            + dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+                            dt.now().strftime("%Y_%m_%d_%H_%M_%S") 
+                            + song_obj_cover_image_file.filename
                         )
                         song_obj_cover_image_file.save(
                             os.path.join(
@@ -484,8 +488,8 @@ class Creator_Song_API(Resource):
                 ):
                     try:
                         song_obj_audio_file_filename = (
-                            song_obj_audio_file.filename
-                            + dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+                            dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+                            + song_obj_audio_file.filename
                         )
                         song_obj_audio_file.save(
                             os.path.join(
@@ -509,8 +513,8 @@ class Creator_Song_API(Resource):
                 ):
                     try:
                         song_obj_lyrics_file_filename = (
-                            song_obj_lyrics_file.filename
-                            + dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+                            dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+                            + song_obj_lyrics_file.filename
                         )
                         song_obj_lyrics_file.save(
                             os.path.join(
@@ -567,9 +571,10 @@ class Common_Song_Play_API(Resource):
 
 class Common_Albums_By_Creator_API(Resource):
     @auth_required("token")
-    def get(self, id):
+    def get(self, name):
         """Fetches all albums of a creator."""
-        albums = Albums.query.filter_by(creator_id=id).all()
+        user = Users.query.filter_by(username=name).first()
+        albums = Albums.query.filter_by(creator_id=user.id).all()
         if albums:
             return_json = {}
             for album in albums:
@@ -586,9 +591,10 @@ class Common_Albums_By_Creator_API(Resource):
 
 class Common_Playlists_By_User_API(Resource):
     @auth_required("token")
-    def get(self, id):
+    def get(self, name):
         """Fetches all playlists of a user."""
-        playlists = Playlists.query.filter_by(user_id=id).all()
+        user = Users.query.filter_by(username=name).first()
+        playlists = Playlists.query.filter_by(user_id=user.id).all()
         if playlists:
             return_json = {}
             for playlist in playlists:
@@ -747,12 +753,18 @@ class Common_Search_API(Resource):
         song_id = request.args.get("song_id")
         song_obj = Songs.query.filter_by(id=song_id).first()
         if song_obj:
-            return os.path.join(os.getenv("BACKEND_URL"), "../static", "songs", song_obj.song_url), 200
+            return (
+                os.path.join(
+                    os.getenv("BACKEND_URL"), "../static", "songs", song_obj.song_url
+                ),
+                200,
+            )
         else:
             raise NotFound(status_code=404, error_message="Song not found")
 
 
 ### Patron APIs
+
 
 class Patron_Download_API(Resource):
     @roles_required("patron")
@@ -799,43 +811,59 @@ class Patron_Download_API(Resource):
             else:
                 raise NotFound(status_code=404, error_message="Album not found")
         else:
-            raise BadRequest(error_message="Missing arguments, please include song_id or album_id")
+            raise BadRequest(
+                error_message="Missing arguments, please include song_id or album_id"
+            )
 
 
 class Patron_Subscribe_API(Resource):
     @roles_accepted("melophile", "admin")
     @auth_required("token")
-    def post(self, id):
+    def post(self, name):
         """Converts a melophile into patron."""
-        user_obj = Users.query.filter_by(id=id).first()
+        user_obj = Users.query.filter_by(username=name).first()
         if user_obj:
-            if "patron" not in user_obj.roles:
-                user_obj.roles.append("patron")
-                db.session.commit()
+            user_datastore.add_role_to_user(user_obj, "patron")
+            db.session.commit()
             return "You are now a patron", 200
         else:
             raise NotFound(status_code=404, error_message="User not found")
-        
+
 
 ### Melophile APIs
+
 
 class Melophile_User_Account_API(Resource):
     def post(self):
         """Creates a Melophile account on Spotlight."""
         form_data = request.get_json()
-        username= form_data.get("username")
-        email= form_data.get("email")
-        password=hash_password(form_data.get("password"))
+        username = form_data.get("username")
+        email = form_data.get("email")
+        password = hash_password(form_data.get("password"))
         melophile_role = user_datastore.find_role("melophile")
         if user_datastore.find_user(username=username):
-            raise ValidationError(status_code=400, error_code="usr_1", error_message="A user exists with same username, please pick other username")
+            raise ValidationError(
+                status_code=400,
+                error_code="usr_1",
+                error_message="A user exists with same username, please pick other username",
+            )
         elif user_datastore.find_user(email=email):
-            raise ValidationError(status_code=400, error_code="usr_2", error_message="You have account with same email, if you forgot account details contact support@spotlight.in")
+            raise ValidationError(
+                status_code=400,
+                error_code="usr_2",
+                error_message="You have account with same email, if you forgot account details contact support@spotlight.in",
+            )
         else:
-            user_datastore.create_user(username=username, email=email, password=password, roles=[melophile_role])
+            user_datastore.create_user(
+                username=username,
+                email=email,
+                password=password,
+                roles=[melophile_role],
+            )
             db.session.commit()
         return "Melophile account created", 200
-    
+
+
 class Melophile_Flag_Song_API(Resource):
     def post(self, id):
         """Flags a song"""
@@ -852,7 +880,8 @@ class Melophile_Flag_Song_API(Resource):
             return "Song flagged", 200
         else:
             raise NotFound(status_code=404, error_message="Song not found")
-        
+
+
 class Melophile_Flag_Album_API(Resource):
     def post(self, id):
         """Flags an album"""
@@ -869,7 +898,8 @@ class Melophile_Flag_Album_API(Resource):
             return "Album flagged", 200
         else:
             raise NotFound(status_code=404, error_message="Album not found")
-        
+
+
 class Melophile_Rate_Song_API(Resource):
     @roles_accepted("melophile", "patron")
     @auth_required("token")
@@ -888,16 +918,23 @@ class Melophile_Rate_Song_API(Resource):
             return "Thank you for giving feedback on the song", 200
         else:
             raise NotFound(status_code=404, error_message="Song not found")
-        
+
+
 class Melophile_Lyrics_API(Resource):
     @auth_required("token")
-    def get(self):
+    def get(self, song_id):
         """returns a link to file containing lyrics of a song"""
-        song_id = request.args.get("song_id")
         song_obj = Songs.query.filter_by(id=song_id).first()
         if song_obj:
             if song_obj.lyrics_url:
-                return os.path.join(os.getenv("BACKEND_URL"), "../static", "lyrics", song_obj.lyrics_url),
+                return (
+                    os.path.join(
+                        os.getenv("BACKEND_URL"),
+                        "../static",
+                        "lyrics",
+                        song_obj.lyrics_url,
+                    ),
+                )
             else:
                 raise NotFound(status_code=404, error_message="Lyrics not found")
         else:
