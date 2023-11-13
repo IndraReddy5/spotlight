@@ -34,6 +34,10 @@ def create_app():
         Creator_Song_API, "/api/creator/song/new", "/api/creator/song/<int:id>"
     )
     api.add_resource(Creator_Genre_Req_API, "/api/creator/genre/new")
+    api.add_resource(
+        Creator_Add_Song_Genre_API,
+        "/api/creator/song/<int:song_id>/add/genre/<int:genre_id>",
+    )
     api.add_resource(Common_Albums_By_Creator_API, "/api/creator/<string:name>/albums")
     api.add_resource(
         Common_Playlists_By_User_API,
@@ -52,6 +56,10 @@ def create_app():
     api.add_resource(Melophile_Flag_Album_API, "/api/flag/album/<int:id>")
     api.add_resource(Melophile_Rate_Song_API, "/api/song/<int:id>/rating")
     api.add_resource(Melophile_Lyrics_API, "/api/song/<int:song_id>/lyrics")
+    api.add_resource(
+        Melophile_Add_Song_Playlist_API,
+        "/api/playlist/<int:playlist_id>/add/<int:song_id>",
+    )
     app.security = Security(app, user_datastore)
     api.init_app(app)
     CORS(app)

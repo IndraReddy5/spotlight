@@ -1,4 +1,4 @@
-from datetime import datetime as dt
+from datetime import timedelta, datetime as dt
 from flask_restful import Resource, request
 from flask import send_file
 import zipfile
@@ -359,7 +359,8 @@ class Creator_Album_API(Resource):
                     and album_obj.cover_image != cover_image_file.filename
                 ):
                     cover_image_file_filename = (
-                        dt.now().strftime("%Y_%m_%d_%H_%M_%S") + cover_image_file.filename
+                        dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+                        + cover_image_file.filename
                     )
                     try:
                         cover_image_file.save(
@@ -398,7 +399,7 @@ class Creator_Song_API(Resource):
         form_data = request.form
         song_obj = Songs()
         song_obj.album_id = form_data.get("album_id")
-        song_obj.name = form_data.get("name")
+        song_obj.name = form_data.get("song_name")
         song_obj_cover_image_file = None
         if len(request.files) == 3:
             song_obj_cover_image_file = request.files["cover_image"]
@@ -406,11 +407,12 @@ class Creator_Song_API(Resource):
         song_obj_lyrics_file = request.files["lyrics_file"]
         if song_obj_cover_image_file:
             song_obj_cover_image_file_filename = (
-                dt.now().strftime("%Y_%m_%d_%H_%M_%S") + song_obj_cover_image_file.filename
+                dt.now().strftime("%Y_%m_%d_%H_%M_%S")
+                + song_obj_cover_image_file.filename
             )
-        song_obj_audio_file_filename = dt.now().strftime(
-            "%Y_%m_%d_%H_%M_%S"
-        ) + song_obj_audio_file.filename
+        song_obj_audio_file_filename = (
+            dt.now().strftime("%Y_%m_%d_%H_%M_%S") + song_obj_audio_file.filename
+        )
         song_obj_lyrics_file_filename = (
             dt.now().strftime("%Y_%m_%d_%H_%M_%S")
         ) + song_obj_lyrics_file.filename
@@ -418,7 +420,10 @@ class Creator_Song_API(Resource):
             if song_obj_cover_image_file:
                 song_obj_cover_image_file.save(
                     os.path.join(
-                        pwd, "../static", "Song_Images", song_obj_cover_image_file_filename
+                        pwd,
+                        "../static",
+                        "Song_Images",
+                        song_obj_cover_image_file_filename,
                     )
                 )
                 song_obj.cover_image = song_obj_cover_image_file_filename
@@ -458,7 +463,7 @@ class Creator_Song_API(Resource):
                 ):
                     try:
                         song_obj_cover_image_file_filename = (
-                            dt.now().strftime("%Y_%m_%d_%H_%M_%S") 
+                            dt.now().strftime("%Y_%m_%d_%H_%M_%S")
                             + song_obj_cover_image_file.filename
                         )
                         song_obj_cover_image_file.save(
@@ -559,6 +564,31 @@ class Creator_Genre_Req_API(Resource):
         return "Genre request created", 200
 
 
+class Creator_Add_Song_Genre_API(Resource):
+    @roles_accepted("creator", "admin")
+    @auth_required("token")
+    def post(self, song_id, genre_id):
+        """Adds song to a genre."""
+        print("Genre API checkpoint 1")
+        song_genre_obj = SongGenre()
+        song_obj = Songs.query.filter_by(id=song_id).first()
+        genre_obj = Genre.query.filter_by(id=genre_id).first()
+        if song_obj and genre_obj:
+            if (
+                song_obj.song_album_info.creator_id == current_user.id
+                or current_user.has_role("admin")
+            ):
+                song_genre_obj.song_id = song_id
+                song_genre_obj.genre_id = genre_id
+                db.session.add(song_genre_obj)
+                db.session.commit()
+            else:
+                raise Unauthorized(error_message="you cannot add this song to genre")
+        else:
+            raise NotFound(status_code=404, error_message="Song or Genre not found")
+        return "Song added to genre", 200
+
+
 ### Common APIs
 
 
@@ -600,7 +630,6 @@ class Common_Playlists_By_User_API(Resource):
             for playlist in playlists:
                 return_json[playlist.id] = {
                     "playlist_name": playlist.playlist_name,
-                    "cover_image": playlist.cover_image,
                     "no_of_songs": playlist.playlist_songs.count(),
                 }
             return json.dumps(return_json), 200
@@ -631,27 +660,10 @@ class Common_Playlists_By_User_API(Resource):
     @auth_required("token")
     def post(self):
         """Creates a playlist."""
-        form_data = request.form()
+        form_data = request.get_json()
         playlist_obj = Playlists()
-        playlist_obj.user_id = current_user.id
-        playlist_obj.playlist_name = form_data.get("playlist_name")
-        cover_image_file = form_data.files.get("cover_image")
-        cover_image_file_filename = cover_image_file.filename + dt.now().strftime(
-            "%Y_%m_%d_%H_%M_%S"
-        )
-        try:
-            cover_image_file.save(
-                os.path.join(
-                    pwd, "../static", "Playlist_Images", cover_image_file_filename
-                )
-            )
-            playlist_obj.cover_image = cover_image_file_filename
-        except:
-            raise InternalServerError(
-                status_code=500,
-                error_code="sav_file_e",
-                error_message="Error saving cover image file",
-            )
+        playlist_obj.melophile_id = current_user.id
+        playlist_obj.name = form_data.get("playlist_name")
         db.session.add(playlist_obj)
         db.session.commit()
         return "Playlist created", 200
@@ -659,44 +671,11 @@ class Common_Playlists_By_User_API(Resource):
     @auth_required("token")
     def put(self, id):
         """Edits a playlist."""
-        form_data = request.form()
+        form_data = request.get_json()
         playlist_obj = Playlists.query.filter_by(id=id).first()
         if playlist_obj:
             if playlist_obj.user_id == current_user.id:
                 playlist_obj.playlist_name = form_data.get("playlist_name")
-                cover_image_file = form_data.files.get("cover_image")
-                if (
-                    cover_image_file
-                    and playlist_obj.cover_image != cover_image_file.filename
-                ):
-                    cover_image_file_filename = (
-                        cover_image_file.filename
-                        + dt.now().strftime("%Y_%m_%d_%H_%M_%S")
-                    )
-                    try:
-                        cover_image_file.save(
-                            os.path.join(
-                                pwd,
-                                "../static",
-                                "Playlist_Images",
-                                cover_image_file_filename,
-                            )
-                        )
-                        os.remove(
-                            os.path.join(
-                                pwd,
-                                "../static",
-                                "Playlist_Images",
-                                playlist_obj.cover_image,
-                            )
-                        )
-                        playlist_obj.cover_image = cover_image_file_filename
-                    except:
-                        raise InternalServerError(
-                            status_code=500,
-                            error_code="sav_file_e",
-                            error_message="Error saving cover image file",
-                        )
                 db.session.commit()
                 return "Playlist edited", 200
             else:
@@ -824,6 +803,10 @@ class Patron_Subscribe_API(Resource):
         user_obj = Users.query.filter_by(username=name).first()
         if user_obj:
             user_datastore.add_role_to_user(user_obj, "patron")
+            user_sub_obj = UserSubscriptions()
+            user_sub_obj.melophile_id = current_user.id
+            user_sub_obj.subscription_ending = dt.now() + timedelta(days=365)
+            db.session.add(user_sub_obj)
             db.session.commit()
             return "You are now a patron", 200
         else:
@@ -911,7 +894,7 @@ class Melophile_Rate_Song_API(Resource):
         if song_obj:
             song_rating_obj = SongRatings()
             song_rating_obj.song_id = id
-            song_rating_obj.user_id = current_user.id
+            song_rating_obj.melophile_id = current_user.id
             song_rating_obj.rating = rating
             db.session.add(song_rating_obj)
             db.session.commit()
@@ -939,3 +922,26 @@ class Melophile_Lyrics_API(Resource):
                 raise NotFound(status_code=404, error_message="Lyrics not found")
         else:
             raise NotFound(status_code=404, error_message="Song not found")
+
+
+class Melophile_Add_Song_Playlist_API(Resource):
+    @auth_required("token")
+    def post(self, playlist_id, song_id):
+        """Adds a song to a playlist."""
+        playlist_obj = Playlists.query.filter_by(id=playlist_id).first()
+        if playlist_obj:
+            if playlist_obj.melophile_id == current_user.id:
+                song_obj = Songs.query.filter_by(id=song_id).first()
+                if song_obj:
+                    playlist_song_obj = PlaylistSongs()
+                    playlist_song_obj.playlist_id = playlist_id
+                    playlist_song_obj.song_id = song_id
+                    db.session.add(playlist_song_obj)
+                    db.session.commit()
+                    return "Song added to playlist", 200
+                else:
+                    raise NotFound(status_code=404, error_message="Song not found")
+            else:
+                raise Unauthorized(error_message="you cannot add to this playlist")
+        else:
+            raise NotFound(status_code=404, error_message="Playlist not found")
