@@ -82,7 +82,7 @@ class Admin_Genre_API(Resource):
             genre.admin_approval = form_data.get("admin_approval")
             db.session.commit()
             return "Genre request updated", 200
-        return "The request doesn't exist", 404
+        raise NotFound(status_code=404, error_message="Genre not found")
 
 
 class Admin_Flags_API(Resource):
@@ -569,21 +569,23 @@ class Creator_Add_Song_Genre_API(Resource):
     @auth_required("token")
     def post(self, song_id, genre_id):
         """Adds song to a genre."""
-        print("Genre API checkpoint 1")
         song_genre_obj = SongGenre()
         song_obj = Songs.query.filter_by(id=song_id).first()
         genre_obj = Genre.query.filter_by(id=genre_id).first()
         if song_obj and genre_obj:
-            if (
-                song_obj.song_album_info.creator_id == current_user.id
-                or current_user.has_role("admin")
-            ):
-                song_genre_obj.song_id = song_id
-                song_genre_obj.genre_id = genre_id
-                db.session.add(song_genre_obj)
-                db.session.commit()
+            if genre_obj.admin_approval == "Yes":
+                if (
+                    song_obj.song_album_info.creator_id == current_user.id
+                    or current_user.has_role("admin")
+                ):
+                    song_genre_obj.song_id = song_id
+                    song_genre_obj.genre_id = genre_id
+                    db.session.add(song_genre_obj)
+                    db.session.commit()
+                else:
+                    raise Unauthorized(error_message="you cannot add this song to genre")
             else:
-                raise Unauthorized(error_message="you cannot add this song to genre")
+                raise Unauthorized(error_message=f"The {genre_obj.genre} is not approved by admin")
         else:
             raise NotFound(status_code=404, error_message="Song or Genre not found")
         return "Song added to genre", 200

@@ -570,12 +570,14 @@ def create_album(user, album_cover_path, album_name, artists_names, file_name):
     files = {
         "cover_image": (file_name, open(album_cover_path, "rb"), "image/png"),
     }
-    req.post(
+    call = req.post(
         "http://localhost:8000/api/creator/album/new",
         data=form_data,
         files=files,
         headers={"Auth-Token": headers["Auth-Token"]},
     )
+    if call.status_code == 200:
+        print(f"{album_name} album has been created")
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
@@ -606,164 +608,222 @@ def add_song(
             open(cover_image_file, "rb"),
             "image/png",
         )
-    req.post(
+    call = req.post(
         "http://localhost:8000/api/creator/song/new",
         data=form_data,
         files=files,
         headers={"Auth-Token": headers["Auth-Token"]},
     )
+    if call.status_code == 200:
+        print(
+            f"{song_name} song has been added to {Albums[album_id-1]['album_name']} album"
+        )
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
 # Helper Function for adding a new genre
 def add_genre(user, genre):
     headers = make_header(user)
-    req.post(
+    call = req.post(
         "http://localhost:8000/api/creator/genre/new",
         json={"genre": genre},
         headers={"Auth-Token": headers["Auth-Token"]},
     )
+    if call.status_code == 200:
+        print(f"{genre} genre has been added to database")
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
 # Helper Function for adding songs genre
 def add_song_genre(user, song_id, genre_id):
     headers = make_header(user)
-    req.post(
-        f"http://localhost:8000/api/creator/song/{song_id}/add/genre/{genre_id}",
-        headers={"Auth-Token": headers["Auth-Token"]},
-    )
+    try:
+        call = req.post(
+            f"http://localhost:8000/api/creator/song/{song_id}/add/genre/{genre_id}",
+            headers={"Auth-Token": headers["Auth-Token"]},
+        )
+        call.raise_for_status()
+        if call.status_code == 200:
+            print(
+                f"{Genres[genre_id-1]['genre']} genre has been added to {Songs[song_id-1]['song_name']} song"
+            )
+    except req.exceptions.HTTPError as err:
+        print(err.args[0])
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
 # Helper Function for creating a new playlist
 def add_playlist(user, playlist_name):
     headers = make_header(user)
-    req.post(
+    call = req.post(
         "http://localhost:8000/api/playlist/new",
         json={"playlist_name": playlist_name},
         headers={"Auth-Token": headers["Auth-Token"]},
     )
+    if call.status_code == 200:
+        print(f"{playlist_name} playlist has been created")
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
 # Helper Function for adding songs to playlist
 def add_song_playlist(user, playlist_id, song_id):
     headers = make_header(user)
-    req.post(
+    call = req.post(
         f"http://localhost:8000/api/playlist/{playlist_id}/add/{song_id}",
         headers={"Auth-Token": headers["Auth-Token"]},
     )
+    if call.status_code == 200:
+        print(
+            f"{Songs[song_id-1]['song_name']} song has been added to {Playlists[playlist_id-1]['playlist_name']} playlist"
+        )
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
 # Helper Function for adding user rating to songs
 def add_rating(user, song_id, rating):
     headers = make_header(user)
-    req.post(
+    call = req.post(
         f"http://localhost:8000/api/song/{song_id}/rating",
         json={"rating": rating},
         headers={"Auth-Token": headers["Auth-Token"]},
     )
+    if call.status_code == 200:
+        print(
+            f"{Songs[song_id-1]['song_name']} song has been rated {rating} by {user['username']}"
+        )
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
 # Helper Function for flagging a Album
 def flag_album(user, album_id, reason):
     headers = make_header(user)
-    req.post(
+    call = req.post(
         f"http://localhost:8000/api/flag/album/{album_id}",
         json={"reason": reason},
         headers={"Auth-Token": headers["Auth-Token"]},
     )
+    if call.status_code == 200:
+        print(
+            f"{Albums[album_id-1]['album_name']} album has been flagged by {user['username']}"
+        )
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
 # Helper Function for flagging a Song
 def flag_song(user, song_id, reason):
     headers = make_header(user)
-    req.post(
+    call = req.post(
         f"http://localhost:8000/api/flag/song/{song_id}",
         json={"reason": reason},
         headers={"Auth-Token": headers["Auth-Token"]},
     )
+    if call.status_code == 200:
+        print(
+            f"{Songs[song_id-1]['song_name']} album has been flagged by {user['username']}"
+        )
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
 ## adding New Users
 for user in New_Users:
-    req.post(
+    call = req.post(
         "http://localhost:8000/api/signup",
         json=user,
         headers={"Content-Type": "application/json"},
     )
+    if call.status_code == 200:
+        print(f"{user['username']} has been added")
 
 ## Making John, Samay, crux, Sher, Murad as Creators
 for user in New_Users[11:]:
     headers = make_header(user)
-    print(f"{user['username']} is creator now")
-    req.post(
+    call = req.post(
         f"http://localhost:8000/api/creator/signup/{user['username']}", headers=headers
     )
+    if call.status_code == 200:
+        print(f"{user['username']} is creator now")
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 ## Making Root, Monk, Shiv, Panda, Sherlock as patrons
 for user in New_Users[6:11]:
     headers = make_header(user)
-    print(f"{user['username']} is patron now")
-    req.post(
+    call = req.post(
         f"http://localhost:8000/api/patron/{user['username']}/subscribe",
         headers=headers,
     )
+    if call.status_code == 200:
+        print(f"{user['username']} is patron now")
     req.post("http://localhost:8000/api/logout", headers=headers)
 
 
 ## Creating new albums
 for album in Albums:
     create_album(**album)
-    print(f"{album['album_name']} created")
-
 
 ## Creating new songs and adding them to albums
 for song in Songs:
     add_song(**song)
-    print(f"{song['song_name']} song added")
 
 ## Making Genres
 for genre in Genres:
     add_genre(**genre)
-    print(f"{genre['genre']} genre added")
+
+## Approving song genres by admin
+for num in range(1, len(Genres), 2):
+    headers = make_header(Admin_User)
+    call = req.post(
+        f"http://localhost:8000/api/admin/genre",
+        json={"genre_id": num, "admin_approval": "Yes"},
+        headers=headers,
+    )
+    if call.status_code == 200:
+        print(f"{Genres[num]['genre']} genre has been approved by admin")
+    req.post("http://localhost:8000/api/logout", headers=headers)
 
 ## Adding song genres
 for song_genre in Song_Genre:
     add_song_genre(**song_genre)
-print("Song genres added")
 
 ## creating playlists
 for playlist in Playlists:
     add_playlist(**playlist)
-    print(f"{playlist['playlist_name']} playlist created")
 
 ## Adding songs to playlists
 for playlist_song in Playlist_Songs:
     add_song_playlist(**playlist_song)
-    print(
-        f"{Songs[playlist_song['song_id']-1]['song_name']} added to {playlist_song['playlist_id']}"
-    )
 
 ## Adding user ratings on songs
 for review in Reviews:
     add_rating(**review)
-print("Ratings added")
-
 
 ## Flagging some songs
 for song_flag in Song_Flags:
     flag_song(**song_flag)
-print("Songs flagged")
 
+## Marking some song flags as read by Admin
+for num in range(1, len(Song_Flags), 2):
+    headers = make_header(Admin_User)
+    call = req.post(
+        f"http://localhost:8000/api/admin/flags",
+        json={"flag_type": "song", "flag_id": num},
+        headers=headers,
+    )
+    if call.status_code == 200:
+        print(f"{num} song flag has been read by Admin")
+    req.post("http://localhost:8000/api/logout", headers=headers)
 
 ## Flagging some albums
 for album_flag in Album_Flags:
     flag_album(**album_flag)
-print("Albums flagged")
+
+## Marking some album flags as read by Admin
+for num in range(1, len(Album_Flags), 2):
+    headers = make_header(Admin_User)
+    call = req.post(
+        f"http://localhost:8000/api/admin/flags",
+        json={"flag_type": "album", "flag_id": num},
+        headers=headers,
+    )
+    if call.status_code == 200:
+        print(f"{num} album flag has been read by Admin")
+    req.post("http://localhost:8000/api/logout", headers=headers)
