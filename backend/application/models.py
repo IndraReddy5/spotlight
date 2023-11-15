@@ -60,7 +60,6 @@ class Songs(db.Model):
     cover_image = db.Column(db.String)
     song_url = db.Column(db.String)
     lyrics_url = db.Column(db.String)
-    genre = db.Column(db.Integer)
     duration = db.Column(db.Integer)  # in seconds
     release_date = db.Column(db.DateTime)
 
@@ -71,6 +70,7 @@ class Genre(db.Model):
     genre = db.Column(db.String)
     admin_approval = db.Column(db.String, default="Pending")
     requested_by = db.Column(db.Integer, db.ForeignKey("users.id"))
+    songs_rel = db.relationship("SongGenre", foreign_keys="SongGenre.genre_id",backref="genre_table")
 
 
 class SongGenre(db.Model):

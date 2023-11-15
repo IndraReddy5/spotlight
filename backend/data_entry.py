@@ -118,6 +118,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics1.txt",
         "song_file_name": "everything.mp3",
         "lyrics_file_name": "everything.txt",
+        "duration": 256,
     },
     {
         "user": New_Users[11],
@@ -127,6 +128,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics1.txt",
         "song_file_name": "chime.mp3",
         "lyrics_file_name": "chime.txt",
+        "duration": 242,
     },
     {
         "user": New_Users[11],
@@ -138,6 +140,7 @@ Songs = [
         "lyrics_file_name": "waves.txt",
         "song_cover_file_name": "waves.jpg",
         "cover_image_file": "/home/monk/spotlight/backend/static/Test_Album_Song_Cover_Images/old-monk_-_alwin.jpeg",
+        "duration": 256,
     },
     {
         "user": New_Users[12],
@@ -147,6 +150,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics1.txt",
         "song_file_name": "dont_understand.mp3",
         "lyrics_file_name": "dont_understand.txt",
+        "duration": 130,
     },
     {
         "user": New_Users[12],
@@ -156,6 +160,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics1.txt",
         "song_file_name": "closer.mp3",
         "lyrics_file_name": "closer.txt",
+        "duration": 201,
     },
     {
         "user": New_Users[12],
@@ -165,6 +170,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics2.txt",
         "song_file_name": "cricket.mp3",
         "lyrics_file_name": "cricket.txt",
+        "duration": 143,
     },
     {
         "user": New_Users[13],
@@ -174,6 +180,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics2.txt",
         "song_file_name": "fly_away.mp3",
         "lyrics_file_name": "fly_away.txt",
+        "duration": 267,
     },
     {
         "user": New_Users[14],
@@ -183,6 +190,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics2.txt",
         "song_file_name": "river.mp3",
         "lyrics_file_name": "river.txt",
+        "duration": 90, 
     },
     {
         "user": New_Users[14],
@@ -192,6 +200,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics2.txt",
         "song_file_name": "make_it_right.mp3",
         "lyrics_file_name": "make_it_right.txt",
+        "duration": 152,
     },
     {
         "user": New_Users[14],
@@ -201,6 +210,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics2.txt",
         "song_file_name": "disappear.mp3",
         "lyrics_file_name": "disappear.txt",
+        "duration": 196,
     },
     {
         "user": New_Users[14],
@@ -210,6 +220,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics3.txt",
         "song_file_name": "running_away.mp3",
         "lyrics_file_name": "running_away.txt",
+        "duration": 138,
     },
     {
         "user": New_Users[15],
@@ -219,6 +230,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics3.txt",
         "song_file_name": "gone.mp3",
         "lyrics_file_name": "gone.txt",
+        "duration": 141,
     },
     {
         "user": New_Users[15],
@@ -228,6 +240,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics3.txt",
         "song_file_name": "pressure.mp3",
         "lyrics_file_name": "pressure.txt",
+        "duration": 155,
     },
     {
         "user": New_Users[15],
@@ -237,6 +250,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics3.txt",
         "song_file_name": "slow_down.mp3",
         "lyrics_file_name": "slow_down.txt",
+        "duration": 137
     },
     {
         "user": New_Users[15],
@@ -246,6 +260,7 @@ Songs = [
         "lyrics_file_path": "/home/monk/spotlight/backend/static/Test_Lyrics/lyrics3.txt",
         "song_file_name": "take_our_time.mp3",
         "lyrics_file_name": "take_our_time.txt",
+        "duration": 140,
     },
 ]
 
@@ -590,6 +605,7 @@ def add_song(
     lyrics_file_path,
     song_file_name,
     lyrics_file_name,
+    duration,
     song_cover_file_name=None,
     cover_image_file=None,
 ):
@@ -597,6 +613,7 @@ def add_song(
     form_data = {
         "album_id": album_id,
         "song_name": song_name,
+        "duration": duration,
     }
     files = {
         "audio_file": (song_file_name, open(audio_file_path, "rb"), "image/png"),

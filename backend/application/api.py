@@ -147,31 +147,31 @@ class Get_Stats(Resource):
         if song_id:
             song_obj = Songs.query.filter_by(id=song_id).first()
             if song_obj:
+                return_json["id"] = song_obj.id
+                return_json["song_name"] = song_obj.name
                 if song_obj.cover_image:
-                    return_json["cover_image"] = song_obj.cover_image
+                    return_json["cover_image"] = "static/Song_Images/" + song_obj.cover_image
                 else:
-                    return_json["id"] = song_obj.id
-                    return_json["song_name"] = song_obj.song_name
-                    return_json["cover_image"] = song_obj.song_album_info.cover_image
-                    return_json["album_name"] = song_obj.song_album_info.album_name
-                    return_json["song_url"] = song_obj.song_url
-                    return_json["lyrics_url"] = song_obj.lyrics_url
-                    return_json["genre"] = song_obj.genre
-                    return_json["duration"] = song_obj.duration
-                    return_json["release_date"] = prettify_date(song_obj.release_date)
-                    return_json["artists"] = song_obj.song_album_info.artists_names
-                    return_json["rating"] = rating_avg(
-                        SongRatings.query.with_entities(SongRatings.rating)
-                        .filter_by(song_id=song_id)
-                        .all()
-                    )
-                    if "admin" in current_user.roles:
-                        return_json["flags_on_song"] = SongsFlagged.query.filter_by(
-                            song_id=song_id
-                        ).count()
-                        return_json["Song_in_no_of_playlists"] = Playlists.query.filter(
-                            PlaylistSongs.song_id == song_id
-                        ).count()
+                    return_json["cover_image"] = "static/Album_Images/" + song_obj.song_album_info.cover_image
+                return_json["album_name"] = song_obj.song_album_info.album_name
+                return_json["song_url"] = "static/songs/" + song_obj.song_url
+                return_json["lyrics_url"] = "static/lyrics/" + song_obj.lyrics_url
+                return_json["genre"] = [x.genre_table.genre for x in SongGenre.query.filter_by(song_id=song_id).all()]
+                return_json["duration"] = song_obj.duration
+                return_json["release_date"] = prettify_date(song_obj.release_date)
+                return_json["artists"] = song_obj.song_album_info.artists_names
+                return_json["rating"] = rating_avg(
+                    SongRatings.query.with_entities(SongRatings.rating)
+                    .filter_by(song_id=song_id)
+                    .all()
+                )
+                if "admin" in current_user.roles:
+                    return_json["flags_on_song"] = SongsFlagged.query.filter_by(
+                        song_id=song_id
+                    ).count()
+                    return_json["Song_in_no_of_playlists"] = PlaylistSongs.query.filter_by(
+                        song_id = song_id
+                    ).count()
                 return json.dumps(return_json), 200
             else:
                 raise NotFound(status_code=404, error_message="Song not found")
@@ -435,6 +435,8 @@ class Creator_Song_API(Resource):
                 os.path.join(pwd, "../static", "lyrics", song_obj_lyrics_file_filename)
             )
             song_obj.lyrics_url = song_obj_lyrics_file_filename
+            song_obj.release_date = dt.now()
+            song_obj.duration = form_data.get("duration")
         except:
             raise InternalServerError(
                 status_code=500,
@@ -742,13 +744,23 @@ class Common_Search_API(Resource):
             )
         else:
             raise NotFound(status_code=404, error_message="Song not found")
+        
+
+class Common_Get_Role_API(Resource):
+    @auth_required("token")
+    def post(self):
+        """Returns role of a user."""
+        priority_roles = ["admin", "creator", "patron", "melophile"]
+        for role in priority_roles:
+            if current_user.has_role(role):
+                return role, 200
 
 
 ### Patron APIs
 
 
 class Patron_Download_API(Resource):
-    @roles_required("patron")
+    @roles_accepted("patron", "creator")
     @auth_required("token")
     def get(self):
         """Downloads a song or songs in an album."""
@@ -850,6 +862,7 @@ class Melophile_User_Account_API(Resource):
 
 
 class Melophile_Flag_Song_API(Resource):
+    @auth_required("token")
     def post(self, id):
         """Flags a song"""
         form_data = request.get_json()
@@ -860,6 +873,7 @@ class Melophile_Flag_Song_API(Resource):
             song_flag_obj.song_id = id
             song_flag_obj.melophile_id = current_user.id
             song_flag_obj.reason = reason
+            song_obj.date_time = dt.now()
             db.session.add(song_flag_obj)
             db.session.commit()
             return "Song flagged", 200
@@ -868,6 +882,7 @@ class Melophile_Flag_Song_API(Resource):
 
 
 class Melophile_Flag_Album_API(Resource):
+    @auth_required("token")
     def post(self, id):
         """Flags an album"""
         form_data = request.get_json()
@@ -878,6 +893,7 @@ class Melophile_Flag_Album_API(Resource):
             album_flag_obj.album_id = id
             album_flag_obj.melophile_id = current_user.id
             album_flag_obj.reason = reason
+            album_flag_obj.date_time = dt.now()
             db.session.add(album_flag_obj)
             db.session.commit()
             return "Album flagged", 200

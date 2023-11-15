@@ -19,11 +19,12 @@
           <span>{{ v$.password.$errors[0].$message }}</span>
         </div>
       </div>
-      <button class="w-100 btn btn-lg" type="submit" style="background-color: var(--bp-khaki); color: var(--bp-white);">Sign in</button>
+      <button class="w-100 btn btn-lg" type="submit"
+        style="background-color: var(--bp-khaki); color: var(--bp-white);">Sign in</button>
       <hr class="my-4">
       <div class="alert alert-danger alert-dismissible fade show" role="alert" v-if="errStatus">
         <strong>{{ errormsg }}</strong>.
-        <button type="button" class="btn-close" aria-label="Close" @click="errStatus=false"></button>
+        <button type="button" class="btn-close" aria-label="Close" @click="errStatus = false"></button>
       </div>
       <small>New to Pixel Shows? <router-link to="/signup">Sign up now</router-link> </small>
     </form>
@@ -68,13 +69,13 @@ export default {
           .then((data) => {
             if (data.meta.code == 200) {
               localStorage.setItem("Auth-Token", data.response.user.authentication_token);
-              if (this.username.toLowerCase() === "admin") {
-                localStorage.setItem("role", "admin");
-              }
-              else {
-                localStorage.setItem("role", "patron");
-              }
-              localStorage.setItem("username", this.username.toLowerCase());
+              fetch("http://127.0.0.1:8000/api/getrole",
+                {
+                  headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
+                  'method': 'POST'
+                })
+                .then((response) => { if (response.ok) { return response.json() } })
+                .then((data) => { localStorage.setItem("role", data) })
               this.$router.push('/dashboard');
             }
             else {

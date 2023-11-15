@@ -5,7 +5,7 @@
             data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
+        <input name="search" class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
         <div class="navbar-nav topnav_user">
             <div class="nav-item text-nowrap">
                 <!-- <a class="nav-link px-3" href="#">Sign out</a> -->
@@ -23,7 +23,7 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="#">Sign out</a></li>
+                        <router-link to="/logout" class="dropdown-item">logout</router-link>
                     </ul>
                 </div>
             </div>

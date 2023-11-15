@@ -49,6 +49,7 @@ def create_app():
         "/api/remove/playlist/<int:playlist_id>",
     )
     api.add_resource(Common_Search_API, "/api/search/song")
+    api.add_resource(Common_Get_Role_API, "/api/getrole")
     api.add_resource(Patron_Download_API, "/api/download")
     api.add_resource(Patron_Subscribe_API, "/api/patron/<string:name>/subscribe")
     api.add_resource(Melophile_User_Account_API, "/api/signup")
