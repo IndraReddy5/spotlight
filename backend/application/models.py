@@ -86,7 +86,7 @@ class Playlists(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     melophile_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     name = db.Column(db.String)
-
+    playlist_songs = db.relationship("PlaylistSongs", backref="playlist_table")
 
 class PlaylistSongs(db.Model):
     __tablename__ = "playlist_songs"

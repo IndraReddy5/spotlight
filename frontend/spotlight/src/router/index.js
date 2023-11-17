@@ -40,7 +40,7 @@ const routes = [
     component: AdminLogin,
     beforeEnter() {
       if (localStorage.getItem("Auth-Token")) {
-        return "/dashboard";
+        return "/dashboard/a";
       }
     }
   },

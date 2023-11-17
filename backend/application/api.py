@@ -150,13 +150,20 @@ class Get_Stats(Resource):
                 return_json["id"] = song_obj.id
                 return_json["song_name"] = song_obj.name
                 if song_obj.cover_image:
-                    return_json["cover_image"] = "static/Song_Images/" + song_obj.cover_image
+                    return_json["cover_image"] = (
+                        "static/Song_Images/" + song_obj.cover_image
+                    )
                 else:
-                    return_json["cover_image"] = "static/Album_Images/" + song_obj.song_album_info.cover_image
+                    return_json["cover_image"] = (
+                        "static/Album_Images/" + song_obj.song_album_info.cover_image
+                    )
                 return_json["album_name"] = song_obj.song_album_info.album_name
                 return_json["song_url"] = "static/songs/" + song_obj.song_url
                 return_json["lyrics_url"] = "static/lyrics/" + song_obj.lyrics_url
-                return_json["genre"] = [x.genre_table.genre for x in SongGenre.query.filter_by(song_id=song_id).all()]
+                return_json["genre"] = [
+                    x.genre_table.genre
+                    for x in SongGenre.query.filter_by(song_id=song_id).all()
+                ]
                 return_json["duration"] = song_obj.duration
                 return_json["release_date"] = prettify_date(song_obj.release_date)
                 return_json["artists"] = song_obj.song_album_info.artists_names
@@ -169,9 +176,9 @@ class Get_Stats(Resource):
                     return_json["flags_on_song"] = SongsFlagged.query.filter_by(
                         song_id=song_id
                     ).count()
-                    return_json["Song_in_no_of_playlists"] = PlaylistSongs.query.filter_by(
-                        song_id = song_id
-                    ).count()
+                    return_json[
+                        "Song_in_no_of_playlists"
+                    ] = PlaylistSongs.query.filter_by(song_id=song_id).count()
                 return json.dumps(return_json), 200
             else:
                 raise NotFound(status_code=404, error_message="Song not found")
@@ -585,9 +592,13 @@ class Creator_Add_Song_Genre_API(Resource):
                     db.session.add(song_genre_obj)
                     db.session.commit()
                 else:
-                    raise Unauthorized(error_message="you cannot add this song to genre")
+                    raise Unauthorized(
+                        error_message="you cannot add this song to genre"
+                    )
             else:
-                raise Unauthorized(error_message=f"The {genre_obj.genre} is not approved by admin")
+                raise Unauthorized(
+                    error_message=f"The {genre_obj.genre} is not approved by admin"
+                )
         else:
             raise NotFound(status_code=404, error_message="Song or Genre not found")
         return "Song added to genre", 200
@@ -623,23 +634,25 @@ class Common_Albums_By_Creator_API(Resource):
             return "No albums found", 200
 
 
-class Common_Playlists_By_User_API(Resource):
+class Common_Playlists_Lists_By_User_API(Resource):
     @auth_required("token")
     def get(self, name):
         """Fetches all playlists of a user."""
         user = Users.query.filter_by(username=name).first()
-        playlists = Playlists.query.filter_by(user_id=user.id).all()
+        playlists = Playlists.query.filter_by(melophile_id=user.id).all()
         if playlists:
             return_json = {}
             for playlist in playlists:
                 return_json[playlist.id] = {
-                    "playlist_name": playlist.playlist_name,
-                    "no_of_songs": playlist.playlist_songs.count(),
+                    "playlist_name": playlist.name,
+                    "no_of_songs": len(playlist.playlist_songs),
                 }
             return json.dumps(return_json), 200
         else:
             return "No playlists found", 200
 
+
+class Common_Playlists_By_User_API(Resource):
     @auth_required("token")
     def get(self, playlist_id):
         """Fetches all songs of a playlist."""
@@ -744,7 +757,7 @@ class Common_Search_API(Resource):
             )
         else:
             raise NotFound(status_code=404, error_message="Song not found")
-        
+
 
 class Common_Get_Role_API(Resource):
     @auth_required("token")

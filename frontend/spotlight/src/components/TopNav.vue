@@ -12,7 +12,7 @@
                 <div class="dropdown px-3 float-end">
                     <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
                         id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
-                        <strong>demon</strong>
+                        <strong>{{username}}</strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser"
                         data-popper-placement="bottom-end"
@@ -33,6 +33,11 @@
 <script>
 export default {
     name: 'TopNav',
+    data: function (){
+        return {
+            username: localStorage.getItem("username")
+        }
+    }
 }
 </script>
 <style>

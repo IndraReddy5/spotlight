@@ -91,7 +91,7 @@ export default {
             if (!this.v$.$error) {
                 const headers = { 'Content-Type': 'application/json' };
                 const formdata = { username: this.username, email: this.email, password: this.password };
-                fetch("http://localhost:8000/api/createuserprofile", { headers: headers, body: JSON.stringify(formdata), method: "POST" })
+                fetch("http://localhost:8000/api/signup", { headers: headers, body: JSON.stringify(formdata), method: "POST" })
                     .then(response => {
                         if (response.status == 200) {
                             return response.json();
@@ -110,7 +110,7 @@ export default {
                             .then((data) => {
                                 if (data.meta.code == 200) {
                                     localStorage.setItem("Auth-Token", data.response.user.authentication_token);
-                                    localStorage.setItem("role", "patron");
+                                    localStorage.setItem("role", "melophile");
                                     localStorage.setItem("username", this.username.toLowerCase());
                                     this.$router.push('/dashboard');
                                 }

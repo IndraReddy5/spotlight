@@ -51,30 +51,22 @@
           </a>
         </a>
       </h6>
-      <ul class="nav flex-column mb-3">
+      <ul class="nav flex-column mb-3" v-if="playlists">
+        <li class="nav-item" v-for="(value, key) in playlists">
+          <h6 class="d-flex justify-content-between align-items-center mt-2 mb-1">
+            <a class="nav-link" href="#">{{ value.playlist_name }}</a>
+          </h6>
+        </li>
+      </ul>
+      <ul class="nav flex-column mb-3" v-else>
         <li class="nav-item">
           <h6 class="d-flex justify-content-between align-items-center mt-2 mb-1">
-            <a class="nav-link" href="#">Playlist 1</a>
+            <p>You don't have any playlists.</p>
           </h6>
         </li>
         <li class="nav-item">
           <h6 class="d-flex justify-content-between align-items-center mt-2 mb-1">
-            <a class="nav-link" href="#">Playlist 2</a>
-          </h6>
-        </li>
-        <li class="nav-item">
-          <h6 class="d-flex justify-content-between align-items-center mt-2 mb-1">
-            <a class="nav-link" href="#">Playlist 3</a>
-          </h6>
-        </li>
-        <li class="nav-item">
-          <h6 class="d-flex justify-content-between align-items-center mt-2 mb-1">
-            <a class="nav-link" href="#">Playlist 4</a>
-          </h6>
-        </li>
-        <li class="nav-item">
-          <h6 class="d-flex justify-content-between align-items-center mt-2 mb-1">
-            <a class="nav-link" href="#">Playlist 5</a>
+            <span>add new playlist</span>
           </h6>
         </li>
       </ul>
@@ -84,6 +76,36 @@
 <script>
 export default {
   name: 'SideNav',
+  data: function () {
+    return {
+      playlists: [],
+      topSongs: [],
+    }
+  },
+  async beforeMount() {
+    await fetch('http://127.0.0.1:8000/api/user/' + localStorage.getItem('username') + '/playlists', {
+      headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
+      'method': 'GET'
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data === 'No playlists found') {
+          this.playlists = null;
+        }
+        else {
+          this.playlists = JSON.parse(data);
+        }
+      });
+    // await fetch('http://127.0.0.1:8000/api/user/' + 'panda' + '/top_songs', {
+    //   headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
+    //   'method': 'GET'
+    // })
+    //   .then(response => response.json())
+    //   .then(data => {
+    //     console.log(data);
+    //     this.topSongs = data;
+    //   });
+  },
 }
 </script>
 <style>

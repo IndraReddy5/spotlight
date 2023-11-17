@@ -57,19 +57,20 @@ export default {
     password: { required: helpers.withMessage('The password field is required', required) }
   },
   methods: {
-    handleFormSubmit: function () {
+    handleFormSubmit: async function () {
       this.v$.$touch()
       if (!this.v$.$error) {
         const headers = { 'Content-Type': 'application/json' }
         const formdata = { username: this.username, password: this.password }
-        fetch("http://127.0.0.1:8000/api/login?include_auth_token", { headers: headers, body: JSON.stringify(formdata), method: "POST" })
+        await fetch("http://127.0.0.1:8000/api/login?include_auth_token", { headers: headers, body: JSON.stringify(formdata), method: "POST" })
           .then(response => {
             return response.json();
           })
-          .then((data) => {
+          .then(async (data) => {
             if (data.meta.code == 200) {
               localStorage.setItem("Auth-Token", data.response.user.authentication_token);
-              fetch("http://127.0.0.1:8000/api/getrole",
+              localStorage.setItem("username", this.username);
+              await fetch("http://127.0.0.1:8000/api/getrole",
                 {
                   headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
                   'method': 'POST'

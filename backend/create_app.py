@@ -39,9 +39,9 @@ def create_app():
         "/api/creator/song/<int:song_id>/add/genre/<int:genre_id>",
     )
     api.add_resource(Common_Albums_By_Creator_API, "/api/creator/<string:name>/albums")
+    api.add_resource(Common_Playlists_Lists_By_User_API, "/api/user/<string:name>/playlists")
     api.add_resource(
         Common_Playlists_By_User_API,
-        "/api/user/<string:name>/playlists",
         "/api/playlist/<int:playlist_id>/songs",
         "/api/playlist/new",
         "/api/playlist/<int:id>/edit",
