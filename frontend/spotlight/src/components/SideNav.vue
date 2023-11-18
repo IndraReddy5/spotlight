@@ -4,31 +4,17 @@
       <h6 class="d-flex justify-content-between align-items-center ps-1 mt-4 mb-1">
         <a class="nav-link active" aria-current="page" href="#">Top Songs</a>
       </h6>
-      <ul class="nav flex-column mb-2">
-        <li class="nav-item">
-          <a class="nav-link" href="#">
-            Song 1
-          </a>
+      <ul class="nav flex-column mb-2" v-if="topSongs">
+        <!-- showing top 5 songs -->
+        <li class="nav-item" v-for="(value, key) in topSongs">
+          <a class="nav-link" href="#" style="text-transform:capitalize;">{{ value.song_name }}</a>
         </li>
+      </ul>
+      <ul class="nav flex-column mb-3" v-else>
         <li class="nav-item">
-          <a class="nav-link" href="#">
-            Song 2
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">
-            Song 3
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">
-            Song 4
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">
-            Song 5
-          </a>
+          <h6 class="d-flex justify-content-between align-items-center mt-2 mb-1">
+            <p>There aren't any Songs that has been rated.</p>
+          </h6>
         </li>
       </ul>
       <h6 class="d-flex justify-content-between align-items-center ps-1 mt-4 mb-1">
@@ -78,8 +64,8 @@ export default {
   name: 'SideNav',
   data: function () {
     return {
-      playlists: [],
-      topSongs: [],
+      playlists: null,
+      topSongs: null,
     }
   },
   async beforeMount() {
@@ -96,15 +82,16 @@ export default {
           this.playlists = JSON.parse(data);
         }
       });
-    // await fetch('http://127.0.0.1:8000/api/user/' + 'panda' + '/top_songs', {
-    //   headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
-    //   'method': 'GET'
-    // })
-    //   .then(response => response.json())
-    //   .then(data => {
-    //     console.log(data);
-    //     this.topSongs = data;
-    //   });
+    await fetch('http://127.0.0.1:8000/api/songs?sort_by=rating&limit=5', {
+      headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
+      'method': 'GET'
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data != {}) {
+          this.topSongs = data;
+        }
+      });
   },
 }
 </script>

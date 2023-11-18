@@ -1,9 +1,9 @@
 <template>
     <div class="col">
-        <div class="container text-center rounded SongComponent m-2">
+        <div class="container rounded SongComponent m-2">
             <div class="row row-cols-2">
                 <div class="col-4 SongImgClass position-relative"><img class="rounded float-start"
-                        src="https://i.pinimg.com/736x/cc/b7/a8/ccb7a899f750774c824b718e6f41c28c.jpg" alt=""
+                        :src="generateUrl(imageSource)" alt=""
                         style="height: 90px; width:90px;">
                     <div class="overlayPlay"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 15" width="90"
                             height="70" stroke="var(--bp-yellow)" stroke-width="1" stroke-linecap="round"
@@ -14,7 +14,7 @@
                 </div>
                 <div class="col-8 position-relative">
                     <div class="float-start">
-                        <div class="pt-2 fs-4">{{ SongName }}</div>
+                        <div class="pt-2">{{ SongName }}</div>
                     </div>
                     <div class="d-flex justify-content-between SongComponentSecondary end-20 bottom-0 position-absolute">
                         <strong><em>{{ SongDuration }} secs</em></strong>
@@ -32,6 +32,12 @@ export default {
         SongName: String,
         ReleaseDate: String,
         SongDuration: Number,
+        imageSource: String,
+    },
+    methods: {
+        generateUrl(src) {
+            return "http://127.0.0.1:8000/" + src;
+        }
     }
 }
 </script>

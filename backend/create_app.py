@@ -38,7 +38,7 @@ def create_app():
         Creator_Add_Song_Genre_API,
         "/api/creator/song/<int:song_id>/add/genre/<int:genre_id>",
     )
-    api.add_resource(Common_Albums_By_Creator_API, "/api/creator/<string:name>/albums")
+    api.add_resource(Common_Albums_By_Creator_API, "/api/albums")
     api.add_resource(Common_Playlists_Lists_By_User_API, "/api/user/<string:name>/playlists")
     api.add_resource(
         Common_Playlists_By_User_API,
@@ -49,7 +49,9 @@ def create_app():
         "/api/remove/playlist/<int:playlist_id>",
     )
     api.add_resource(Common_Search_API, "/api/search/song")
+    api.add_resource(Common_Creator_Avg_Rating_API, "/api/creator/<string:name>/rating")
     api.add_resource(Common_Get_Role_API, "/api/getrole")
+    api.add_resource(Common_Get_Songs_List_API, "/api/songs")
     api.add_resource(Patron_Download_API, "/api/download")
     api.add_resource(Patron_Subscribe_API, "/api/patron/<string:name>/subscribe")
     api.add_resource(Melophile_User_Account_API, "/api/signup")

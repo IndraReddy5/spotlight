@@ -581,26 +581,35 @@ class Creator_Add_Song_Genre_API(Resource):
         song_genre_obj = SongGenre()
         song_obj = Songs.query.filter_by(id=song_id).first()
         genre_obj = Genre.query.filter_by(id=genre_id).first()
-        if song_obj and genre_obj:
-            if genre_obj.admin_approval == "Yes":
-                if (
-                    song_obj.song_album_info.creator_id == current_user.id
-                    or current_user.has_role("admin")
-                ):
-                    song_genre_obj.song_id = song_id
-                    song_genre_obj.genre_id = genre_id
-                    db.session.add(song_genre_obj)
-                    db.session.commit()
+        song_genre_obj = SongGenre.query.filter_by(
+            song_id=song_id, genre_id=genre_id
+        ).first()
+        if not song_genre_obj:
+            if song_obj and genre_obj:
+                print(
+                    song_obj.song_album_info.creator_id,
+                    current_user.id,
+                    current_user.has_role("admin"),
+                )
+                if genre_obj.admin_approval == "Yes":
+                    if (
+                        song_obj.song_album_info.creator_id == current_user.id
+                        or current_user.has_role("admin")
+                    ):
+                        song_genre_obj.song_id = song_id
+                        song_genre_obj.genre_id = genre_id
+                        db.session.add(song_genre_obj)
+                        db.session.commit()
+                    else:
+                        raise Unauthorized(
+                            error_message="you cannot add this song to genre"
+                        )
                 else:
                     raise Unauthorized(
-                        error_message="you cannot add this song to genre"
+                        error_message=f"The {genre_obj.genre} is not approved by admin"
                     )
             else:
-                raise Unauthorized(
-                    error_message=f"The {genre_obj.genre} is not approved by admin"
-                )
-        else:
-            raise NotFound(status_code=404, error_message="Song or Genre not found")
+                raise NotFound(status_code=404, error_message="Song or Genre not found")
         return "Song added to genre", 200
 
 
@@ -616,10 +625,14 @@ class Common_Song_Play_API(Resource):
 
 class Common_Albums_By_Creator_API(Resource):
     @auth_required("token")
-    def get(self, name):
+    def get(self):
         """Fetches all albums of a creator."""
-        user = Users.query.filter_by(username=name).first()
-        albums = Albums.query.filter_by(creator_id=user.id).all()
+        creator_name = request.args.get("creator_name")
+        if creator_name:
+            user = Users.query.filter_by(username=creator_name).first()
+            albums = Albums.query.filter_by(creator_id=user.id).all()
+        else:
+            albums = Albums.query.all()
         if albums:
             return_json = {}
             for album in albums:
@@ -759,6 +772,31 @@ class Common_Search_API(Resource):
             raise NotFound(status_code=404, error_message="Song not found")
 
 
+class Common_Creator_Avg_Rating_API(Resource):
+    @auth_required("token")
+    def get(self, name):
+        """Returns avg rating for all songs of the creator."""
+        usr_obj = Users.query.filter_by(username=name).first()
+        if usr_obj:
+            albums_objs = Albums.query.filter_by(creator_id=usr_obj.id).all()
+            if albums_objs:
+                avg_ratings = []
+                for album in albums_objs:
+                    for song in album.album_songs:
+                        avg_ratings.append(
+                            rating_avg(
+                                SongRatings.query.with_entities(SongRatings.rating)
+                                .filter_by(song_id=song.id)
+                                .all()
+                            )
+                        )
+                if avg_ratings:
+                    return sum(avg_ratings) / len(avg_ratings), 200
+            return 0, 200
+        else:
+            raise NotFound(status_code=404, error_message="User not found")
+
+
 class Common_Get_Role_API(Resource):
     @auth_required("token")
     def post(self):
@@ -767,6 +805,57 @@ class Common_Get_Role_API(Resource):
         for role in priority_roles:
             if current_user.has_role(role):
                 return role, 200
+
+
+class Common_Get_Songs_List_API(Resource):
+    @auth_required("token")
+    def get(self):
+        """Returns all songs sorted by rating or release date."""
+        sort_by = request.args.get("sort_by")
+        limit = request.args.get("limit")
+        songs = Songs.query.all()
+        return_json = {}
+        for song_obj in songs:
+            return_json[song_obj.id] = {}
+            return_json[song_obj.id]["song_name"] = song_obj.name
+            if song_obj.cover_image:
+                return_json[song_obj.id]["cover_image"] = (
+                    "static/Song_Images/" + song_obj.cover_image
+                )
+            else:
+                return_json[song_obj.id]["cover_image"] = (
+                    "static/Album_Images/" + song_obj.song_album_info.cover_image
+                )
+            return_json[song_obj.id]["album_name"] = song_obj.song_album_info.album_name
+            return_json[song_obj.id]["song_url"] = "static/songs/" + song_obj.song_url
+            return_json[song_obj.id]["lyrics_url"] = (
+                "static/lyrics/" + song_obj.lyrics_url
+            )
+            return_json[song_obj.id]["genre"] = [
+                x.genre_table.genre
+                for x in SongGenre.query.filter_by(song_id=song_obj.id).all()
+            ]
+            return_json[song_obj.id]["duration"] = song_obj.duration
+            return_json[song_obj.id]["release_date"] = song_obj.release_date
+            return_json[song_obj.id]["artists"] = song_obj.song_album_info.artists_names
+            return_json[song_obj.id]["rating"] = rating_avg(
+                SongRatings.query.with_entities(SongRatings.rating)
+                .filter_by(song_id=song_obj.id)
+                .all()
+            )
+        if sort_by == "rating":
+            return_json = sort_by_rating(return_json)
+        elif sort_by == "release_date":
+            return_json = sort_by_date(return_json)
+        else:
+            pass
+        for song in return_json:
+            return_json[song]["release_date"] = prettify_date(
+                return_json[song]["release_date"]
+            )
+        if limit:
+            return_json = dict(list(return_json.items())[:int(limit)])
+        return return_json, 200
 
 
 ### Patron APIs

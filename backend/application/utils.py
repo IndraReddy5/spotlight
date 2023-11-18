@@ -14,3 +14,9 @@ def rating_avg(data:list) -> float:
         return 0.0
     else:
         return sum([x[0] for x in data]) / len(data)
+    
+def sort_by_rating(data:dict) -> dict:
+    return dict(sorted(data.items(), key=lambda item: item[1]['rating'], reverse=True))
+
+def sort_by_date(data:dict) -> dict:
+    return dict(sorted(data.items(), key=lambda item: item[1]['release_date'], reverse=True))

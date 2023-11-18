@@ -1,8 +1,7 @@
 <template>
     <div class="col">
         <div class="rounded AlbumComponent m-2 position-relative">
-            <img class="rounded" src="https://i.pinimg.com/736x/cc/b7/a8/ccb7a899f750774c824b718e6f41c28c.jpg" alt=""
-                style="height: 120px; width:120px;">
+            <img class="rounded" :src="generateUrl(imageSource)" alt = "album image" style="height: 120px; width:120px;">
             <div class="overlayPlayAlbum"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 15" width="90" height="70"
                     stroke="var(--bp-yellow)" stroke-width="1" stroke-linecap="round" fill="var(--bp-yellow)"
                     stroke-linejoin="round" class="feather feather-home" aria-hidden="true">
@@ -19,7 +18,13 @@ export default {
     name: 'AlbumComponent',
     props: {
         AlbumName: String,
-        AlbumCreator: String
+        AlbumCreator: String,
+        imageSource: String,
+    },
+    methods: {
+        generateUrl(src) {
+            return "http://127.0.0.1:8000/static/Album_Images/" + src;
+        }
     }
 }
 </script>
