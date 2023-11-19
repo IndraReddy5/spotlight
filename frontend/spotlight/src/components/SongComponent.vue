@@ -36,7 +36,7 @@ export default {
     },
     methods: {
         generateUrl(src) {
-            return "http://127.0.0.1:8000/" + src;
+            return __BACKEND_URL__ + src;
         }
     }
 }

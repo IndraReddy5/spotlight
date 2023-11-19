@@ -69,7 +69,7 @@ export default {
     }
   },
   async beforeMount() {
-    await fetch('http://127.0.0.1:8000/api/user/' + localStorage.getItem('username') + '/playlists', {
+    await fetch(__API_URL__ + 'user/' + localStorage.getItem('username') + '/playlists', {
       headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
       'method': 'GET'
     })
@@ -82,7 +82,7 @@ export default {
           this.playlists = JSON.parse(data);
         }
       });
-    await fetch('http://127.0.0.1:8000/api/songs?sort_by=rating&limit=5', {
+    await fetch(__API_URL__ + 'songs?sort_by=rating&limit=5', {
       headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
       'method': 'GET'
     })

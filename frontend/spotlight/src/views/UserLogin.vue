@@ -62,7 +62,7 @@ export default {
       if (!this.v$.$error) {
         const headers = { 'Content-Type': 'application/json' }
         const formdata = { username: this.username, password: this.password }
-        await fetch("http://127.0.0.1:8000/api/login?include_auth_token", { headers: headers, body: JSON.stringify(formdata), method: "POST" })
+        await fetch(__API_URL__ + "login?include_auth_token", { headers: headers, body: JSON.stringify(formdata), method: "POST" })
           .then(response => {
             return response.json();
           })
@@ -70,14 +70,20 @@ export default {
             if (data.meta.code == 200) {
               localStorage.setItem("Auth-Token", data.response.user.authentication_token);
               localStorage.setItem("username", this.username);
-              await fetch("http://127.0.0.1:8000/api/getrole",
+              await fetch(__API_URL__ + "getrole",
                 {
                   headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
                   'method': 'POST'
                 })
                 .then((response) => { if (response.ok) { return response.json() } })
                 .then((data) => { localStorage.setItem("role", data) })
-              this.$router.push('/dashboard');
+              if (localStorage.getItem("role") === "admin") {
+                this.$router.push('/logout');
+                alert("Login through admin page");
+              }
+              else {
+                this.$router.push('/dashboard');
+              }
             }
             else {
               this.errStatus = true;

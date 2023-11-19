@@ -23,7 +23,7 @@ export default {
     },
     methods: {
         generateUrl(src) {
-            return "http://127.0.0.1:8000/static/Album_Images/" + src;
+            return __BACKEND_URL__ + "static/Album_Images/" + src;
         }
     }
 }

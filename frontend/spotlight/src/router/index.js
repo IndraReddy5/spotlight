@@ -95,13 +95,18 @@ const routes = [
     path: "/logout",
     name: "logout",
     beforeEnter(to, from, next) {
-      fetch("http://127.0.0.1:8000/api/logout",
+      fetch(__API_URL__ + "logout",
         {
           headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
           'method': 'POST'
         })
       localStorage.clear();
-      next("/login");
+      if (from.path == '/login') {
+        next("/adminlogin");
+      }
+      else {
+        next("/login");
+      }
     }
   }
 ];

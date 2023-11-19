@@ -103,7 +103,7 @@ export default {
                     })
                     .then((data) => {
                         console.log(data)
-                        fetch("http://127.0.0.1:8000/api/login?include_auth_token", { headers: headers, body: JSON.stringify(formdata), method: "POST" })
+                        fetch(__API_URL__ + "login?include_auth_token", { headers: headers, body: JSON.stringify(formdata), method: "POST" })
                             .then(response => {
                                 return response.json();
                             })
