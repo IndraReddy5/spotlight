@@ -23,6 +23,7 @@ def create_app():
     api.add_resource(Admin_Change_Password_API, "/api/changepassword/admin")
     api.add_resource(Admin_Genre_API, "/api/admin/genre")
     api.add_resource(Admin_Flags_API, "/api/admin/flags")
+    api.add_resource(Admin_Get_Dashboard_Stats_API, "/api/admin/dashboard/stats")
     api.add_resource(Get_Stats, "/api/stats")
     api.add_resource(Remove_Song_API, "/api/remove/song/<int:id>")
     api.add_resource(Remove_Album_API, "/api/remove/album/<int:id>")

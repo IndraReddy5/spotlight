@@ -6,6 +6,9 @@ import AdminLogin from '@/views/AdminLogin.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import CreatorDashboard from '@/views/CreatorDashboard.vue'
 import AdminDashboard from '@/views/AdminDashboard.vue'
+import CreatePlaylist from '@/views/CreatePlaylist.vue'
+import PlaylistView from '@/views/PlaylistView.vue'
+import CreateAlbum from '@/views/CreateAlbum.vue'
 
 const routes = [
   {
@@ -87,10 +90,48 @@ const routes = [
     }
   },
   {
-    path: '/about',
-    name: 'about',
-    component: () => import('../views/AboutView.vue')
+    path: "/playlist/new",
+    name: "newPlaylist",
+    component: CreatePlaylist,
+    beforeEnter() {
+      if (!localStorage.getItem("Auth-Token")) {
+        return "/login";
+      }
+      if (localStorage.getItem("role") == "admin") {
+        alert("Admins cannot create playlists"); 
+        return "/dashboard/a";
+      }
+    }
   },
+  {
+    path: "/playlist/:playlistID",
+    name: "playlist",
+    component: PlaylistView,
+    beforeEnter() {
+      if (!localStorage.getItem("Auth-Token")) {
+        return "/login";
+      }
+    }
+  },
+  {
+    path: "/album/new",
+    name: "newAlbum",
+    component: CreateAlbum,
+    beforeEnter() {
+      if (!localStorage.getItem("Auth-Token")) {
+        return "/login";
+      }
+      if (localStorage.getItem("role") != "creator") {
+        alert("you cannot create albums"); 
+        return "/dashboard";
+      }
+    }
+  },
+  // {
+  //   path: '/about',
+  //   name: 'about',
+  //   component: () => import('../views/AboutView.vue')
+  // },
   {
     path: "/logout",
     name: "logout",
@@ -108,7 +149,7 @@ const routes = [
         next("/login");
       }
     }
-  }
+  },
 ];
 
 const router = createRouter({

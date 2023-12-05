@@ -35,6 +35,16 @@ class Users(db.Model, UserMixin):
         secondary=RolesUsers.__table__,
         backref=db.backref("users", lazy="dynamic"),
     )
+    album_flags = db.relationship(
+        "AlbumsFlagged",
+        foreign_keys="AlbumsFlagged.melophile_id",
+        backref=db.backref("user_info"),
+    )
+    song_flags = db.relationship(
+        "SongsFlagged",
+        foreign_keys="SongsFlagged.melophile_id",
+        backref=db.backref("user_info"),
+    )
 
 
 class Albums(db.Model):
@@ -48,7 +58,11 @@ class Albums(db.Model):
         "Songs",
         foreign_keys="Songs.album_id",
         backref=db.backref("song_album_info"),
-        lazy="dynamic",
+    )
+    album_flags = db.relationship(
+        "AlbumsFlagged",
+        foreign_keys="AlbumsFlagged.album_id",
+        backref=db.backref("album_info"),
     )
 
 
@@ -62,6 +76,12 @@ class Songs(db.Model):
     lyrics_url = db.Column(db.String)
     duration = db.Column(db.Integer)  # in seconds
     release_date = db.Column(db.DateTime)
+    song_flags = db.relationship(
+        "SongsFlagged",
+        foreign_keys="SongsFlagged.song_id",
+        backref=db.backref("song_info"),
+    )
+    playlists = db.relationship("PlaylistSongs", backref="song_info")
 
 
 class Genre(db.Model):
@@ -85,7 +105,7 @@ class Playlists(db.Model):
     __tablename__ = "playlists"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     melophile_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    name = db.Column(db.String)
+    name = db.Column(db.String, nullable=False)
     playlist_songs = db.relationship("PlaylistSongs", backref="playlist_table")
 
 class PlaylistSongs(db.Model):
@@ -118,7 +138,7 @@ class SongsFlagged(db.Model):
     song_id = db.Column(db.Integer, db.ForeignKey("songs.id"))
     melophile_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     reason = db.Column(db.String)
-    date_time = db.Column(db.DateTime)
+    date_time = db.Column(db.DateTime, nullable=False)
     admin_read = db.Column(db.Boolean, default=False)
     __table_args__ = (db.UniqueConstraint("song_id", "melophile_id"),)
 
@@ -129,6 +149,6 @@ class AlbumsFlagged(db.Model):
     album_id = db.Column(db.Integer, db.ForeignKey("albums.id"))
     melophile_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     reason = db.Column(db.String)
-    date_time = db.Column(db.DateTime)
+    date_time = db.Column(db.DateTime, nullable=False)
     admin_read = db.Column(db.Boolean, default=False)
     __table_args__ = (db.UniqueConstraint("album_id", "melophile_id"),)

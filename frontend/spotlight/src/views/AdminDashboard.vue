@@ -3,28 +3,28 @@
         <TopNav></TopNav>
         <div class="container-fluid">
             <div class="row">
-                <AdminSideNav></AdminSideNav>
+                <AdminSideNav @get-data="receiveData"></AdminSideNav>
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                     <h2 class="pt-5">Admin Dashboard</h2>
                     <div class="container pt-5">
                         <div class="row g-0 text-center">
                             <div class="col menu_board p-2 m-2 rounded">
                                 <div>
+                                    <h5>Pending Genre Req</h5>
+                                </div>
+                                <div><span> {{ pendingGenreReqLength }}</span></div>
+                            </div>
+                            <div class="col menu_board p-2 m-2 rounded">
+                                <div>
                                     <h5>Pending Album Flag Req</h5>
                                 </div>
-                                <div>25</div>
+                                <div><span> {{ pendingAlbumReqLength }}</span></div>
                             </div>
                             <div class="col menu_board p-2 m-2 rounded">
                                 <div>
                                     <h5>Pending Song Flag Req</h5>
                                 </div>
-                                <div>10</div>
-                            </div>
-                            <div class="col menu_board p-2 m-2 rounded">
-                                <div>
-                                    <h5>Current Logged in users Number</h5>
-                                </div>
-                                <div>50</div>
+                                <div>{{ pendingSongReqLength }}</div>
                             </div>
                         </div>
                     </div>
@@ -34,25 +34,25 @@
                                 <div>
                                     <h5>Total Users</h5>
                                 </div>
-                                <div>200</div>
+                                <div>{{ totalUsers }}</div>
                             </div>
                             <div class="col menu_board p-2 m-2 rounded">
                                 <div>
                                     <h5>Melophiles</h5>
                                 </div>
-                                <div>125</div>
+                                <div>{{ Melophiles - Patrons - Creators }}</div>
                             </div>
                             <div class="col menu_board p-2 m-2 rounded">
                                 <div>
                                     <h5>Patrons</h5>
                                 </div>
-                                <div>50</div>
+                                <div>{{ Patrons }}</div>
                             </div>
                             <div class="col menu_board p-2 m-2 rounded">
                                 <div>
                                     <h5>Creators</h5>
                                 </div>
-                                <div>25</div>
+                                <div>{{ Creators }}</div>
                             </div>
                         </div>
                     </div>
@@ -82,23 +82,58 @@ export default {
         AdminSideNav,
         TopNav,
     },
-    mounted() {
+    data: function () {
+        return {
+            pendingGenreReqLength: null,
+            pendingAlbumReqLength: null,
+            pendingSongReqLength: null,
+            pendingGenreReq: null,
+            pendingSongFlagReq: null,
+            pendingAlbumFlagReq: null,
+            totalUsers: 0,
+            Melophiles: 0,
+            Patrons: 0,
+            Creators: 0,
+            totalSongs: 0,
+            song_rating_data: [],
+            song_genre_data: [],
+        }
+    },
+    async mounted() {
+        await fetch(__API_URL__ + 'admin/dashboard/stats', {
+            headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
+            'method': 'GET'
+        }).then(response => response.json())
+            .then(data => {
+                if (data != "No pending genre creation requests") {
+                    let res_data = data;
+                    this.pendingGenreReqLength = res_data.pending_genre_req;
+                    this.pendingAlbumReqLength = res_data.pending_album_flag_req;
+                    this.pendingSongReqLength = res_data.pending_song_flag_req;
+                    this.Creators = res_data.Creators;
+                    this.Melophiles = res_data.Melophiles;
+                    this.Patrons = res_data.Patrons;
+                    this.totalUsers = res_data.total_users;
+                    this.totalSongs = res_data.total_songs;
+                    let temp_data = [];
+                    for (let i = 0; i < res_data.genre_data.length; i++) {
+                        if (res_data.genre_data[i].value != 0) {
+                            temp_data.push({ name: res_data.genre_data[i].name, value: res_data.genre_data[i].value });
+                        }
+                    }
+                    this.song_genre_data = temp_data;
+                    this.song_rating_data = res_data.song_rating_data;
+                }
+            });
         const width = 300;
         const height = 300;
         const marginTop = 20;
         const marginRight = 0;
         const marginBottom = 30;
         const marginLeft = 40;
-        const bar_data = [{ "letter": "1-2", "frequency": 2 },
-        { "letter": "2-3", "frequency": 5 },
-        { "letter": "3-3.5", "frequency": 10 },
-        { "letter": "3.5-4", "frequency": 25 },
-        { "letter": "4-4.5", "frequency": 50 },
-        { "letter": "4.5-5", "frequency": 90 },
-        ];
-
+        const bar_data = this.song_rating_data;
         const x = d3.scaleBand()
-            .domain(d3.sort(bar_data, d => -d.frequency).map(d => d.letter))
+            .domain(d3.sort(bar_data, d => -d.frequency).map(d => d.range))
             .range([marginLeft, width - marginRight])
             .padding(0.1);
 
@@ -123,7 +158,7 @@ export default {
             .selectAll("rect")
             .data(bar_data)
             .join("rect")
-            .attr("x", d => x(d.letter))
+            .attr("x", d => x(d.range))
             .attr("y", d => y(d.frequency))
             .attr("height", d => y(0) - y(d.frequency))
             .attr("width", x.bandwidth());
@@ -149,7 +184,7 @@ export default {
             .attr("transform", `translate(220, 70)`)
             .style("font", "20px sans-serif")
             .style("fill", "#fff")
-            .text("45");
+            .text(this.totalSongs);
 
         function zoom(svg) {
             const extent = [[marginLeft, marginTop], [width - marginRight, height - marginTop]];
@@ -162,16 +197,11 @@ export default {
 
             function zoomed(event) {
                 x.range([marginLeft, width - marginRight].map(d => event.transform.applyX(d)));
-                svg.selectAll(".bars rect").attr("x", d => x(d.letter)).attr("width", x.bandwidth());
+                svg.selectAll(".bars rect").attr("x", d => x(d.range)).attr("width", x.bandwidth());
                 svg.selectAll(".x-axis").call(xAxis);
             }
         }
-        const data = [{"name":"Classic","value":30},
-        {"name":"Blues","value":15},
-        {"name":"Metal","value":50},
-        {"name":"Lofi","value":40},
-        {"name":"Indie","value":25}
-    ];
+        const data = this.song_genre_data;
         const color = d3.scaleOrdinal()
             .domain(data.map(d => d.name))
             .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), data.length).reverse())
@@ -227,6 +257,19 @@ export default {
                 .attr("fill-opacity", 0.7)
                 .text(d => d.data.value.toLocaleString("en-US")));
 
+    },
+    methods: {
+        receiveData(data) {
+            if (data.key == "pendingGenreReqLength") {
+                this.pendingGenreReqLength = data.value;
+            }
+            else if (data.key == "pendingAlbumReqLength") {
+                this.pendingAlbumReqLength = data.value;
+            }
+            else if (data.key == "pendingSongReqLength") {
+                this.pendingSongReqLength = data.value;
+            }
+        }
     }
 }
 </script>

@@ -16,6 +16,7 @@ from flask_security import (
     roles_accepted,
 )
 from application.utils import *
+from sqlalchemy import func
 
 import os
 import json
@@ -49,6 +50,50 @@ class Admin_Change_Password_API(Resource):
             return "Password Changed", 200
         else:
             raise NotFound(status_code=404, error_message="User not found")
+        
+class Admin_Get_Dashboard_Stats_API(Resource):
+    @roles_required("admin")
+    @auth_required("token")
+    def get(self):
+        """Gets the stats that are required for the admin dashboard"""
+        return_json = {}
+        return_json["pending_genre_req"] = Genre.query.filter_by(admin_approval="Pending").count()
+        return_json["pending_album_flag_req"] = AlbumsFlagged.query.filter_by(admin_read=False).count()
+        return_json["pending_song_flag_req"] = SongsFlagged.query.filter_by(admin_read=False).count()
+        return_json["total_users"] = Users.query.count()
+        return_json["Melophiles"] = RolesUsers.query.filter_by(role_id=4).count()
+        return_json["Patrons"] = RolesUsers.query.filter_by(role_id=2).count()
+        return_json["Creators"] = RolesUsers.query.filter_by(role_id=3).count()
+        return_json["total_songs"] = Songs.query.count()
+        songs = SongRatings.query.with_entities(func.sum(SongRatings.rating)/func.count(SongRatings.rating), SongRatings.song_id).group_by(SongRatings.song_id).all()
+        genres = Genre.query.all()
+        genre_data = []
+        for genre in genres:
+            genre_data.append({"name":genre.genre,"value":SongGenre.query.filter_by(genre_id=genre.id).count()})
+        return_json["genre_data"] = genre_data
+        song_range_dict = {'1-2': 0, '2-3': 0, '3-3.5': 0, '3.5-4': 0, '4-4.5': 0, '4.5-5': 0}
+        for song in songs:
+            r = float(song._data[0])
+            if r <= 5 and r >= 4.5:
+                song_range_dict["4.5-5"] += 1
+            elif r < 4.5 and r >=4:
+                song_range_dict["4-4.5"] += 1
+            elif r < 4 and r >=3.5:
+                song_range_dict["3.5-4"] += 1
+            elif r < 3.5 and r >=3:
+                song_range_dict["3-3.5"] += 1
+            elif r < 3 and r >=2:
+                song_range_dict["2-3"] += 1
+            elif r < 2 and r >=1:
+                song_range_dict["1-2"] += 1
+            else:
+                pass
+        song_rating_data = []
+        for key in ['1-2', '2-3', '3-3.5', '3.5-4', '4-4.5', '4.5-5']:
+            song_rating_data.append({"range":key,"frequency":song_range_dict[key]})
+        return_json["song_rating_data"] = song_rating_data
+
+        return json.loads(json.dumps(return_json)), 200
 
 
 class Admin_Genre_API(Resource):
@@ -56,7 +101,7 @@ class Admin_Genre_API(Resource):
     @auth_required("token")
     def get(self):
         """Fetches all pending genre creation requests."""
-        req_genres = Genre.query.filter_by(active="pending").all()
+        req_genres = Genre.query.filter_by(admin_approval="Pending").all()
         if req_genres:
             return_json = {}
             for genre in req_genres:
@@ -78,6 +123,7 @@ class Admin_Genre_API(Resource):
         ### Enhancement to do, send a mail to the creator through a cron job describing what admin has decided
         form_data = request.get_json()
         genre = Genre.query.filter_by(id=form_data.get("genre_id")).first()
+        print(form_data)
         if genre:
             genre.admin_approval = form_data.get("admin_approval")
             db.session.commit()
@@ -90,13 +136,14 @@ class Admin_Flags_API(Resource):
     @auth_required("token")
     def get(self):
         """Fetches all pending flags for songs and albums."""
-        return_json = {"songs": [], "albums": []}
+        return_json = {"songs": {}, "albums": {}}
         song_flags = SongsFlagged.query.filter_by(admin_read=False).all()
         album_flags = AlbumsFlagged.query.filter_by(admin_read=False).all()
         if song_flags:
             for flag in song_flags:
                 return_json["songs"][flag.id] = {
                     "song_id": flag.song_id,
+                    "song_name": flag.song_info.name,
                     "flagged_by": flag.melophile_id,
                     "flagged_by_name": flag.user_info.username,
                     "reason": flag.reason,
@@ -106,6 +153,7 @@ class Admin_Flags_API(Resource):
             for flag in album_flags:
                 return_json["albums"][flag.id] = {
                     "album_id": flag.album_id,
+                    "album_name": flag.album_info.album_name,
                     "flagged_by": flag.melophile_id,
                     "flagged_by_name": flag.user_info.username,
                     "reason": flag.reason,
@@ -640,7 +688,7 @@ class Common_Albums_By_Creator_API(Resource):
                     "album_name": album.album_name,
                     "cover_image": album.cover_image,
                     "artists": album.artists_names,
-                    "no_of_songs": album.album_songs.count(),
+                    "no_of_songs": len(album.album_songs),
                 }
             return json.dumps(return_json), 200
         else:
@@ -671,13 +719,15 @@ class Common_Playlists_By_User_API(Resource):
         """Fetches all songs of a playlist."""
         playlist_obj = Playlists.query.filter_by(id=playlist_id).first()
         if playlist_obj:
-            if playlist_obj.user_id == current_user.id:
+            if playlist_obj.melophile_id == current_user.id:
                 return_json = {}
+                return_json['playlist_name'] = playlist_obj.name
+                return_json['songs'] = {}
                 for song in playlist_obj.playlist_songs:
-                    return_json[song.id] = {
+                    return_json['songs'][song.id] = {
                         "song_id": song.song_id,
                         "song_name": song.song_info.name,
-                        "cover_image": song.song_info.cover_image,
+                        "cover_image": 'static/Song_Images/' + song.song_info.cover_image if song.song_info.cover_image else 'static/Album_Images/' + song.song_info.song_album_info.cover_image,
                         "album_name": song.song_info.song_album_info.album_name,
                         "artists": song.song_info.song_album_info.artists_names,
                     }
@@ -975,7 +1025,7 @@ class Melophile_Flag_Song_API(Resource):
             song_flag_obj.song_id = id
             song_flag_obj.melophile_id = current_user.id
             song_flag_obj.reason = reason
-            song_obj.date_time = dt.now()
+            song_flag_obj.date_time = dt.now()
             db.session.add(song_flag_obj)
             db.session.commit()
             return "Song flagged", 200

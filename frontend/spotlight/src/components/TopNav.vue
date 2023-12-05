@@ -1,28 +1,32 @@
 <template>
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-4" href="#">Spotlight</a>
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-4" href="/dashboard">Spotlight</a>
         <button class="navbar-toggler d-md-none collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <input name="search" class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
+        <input name="search" class="form-control form-control-dark w-100" type="text" placeholder="Search"
+            aria-label="Search">
         <div class="navbar-nav topnav_user">
             <div class="nav-item text-nowrap">
                 <!-- <a class="nav-link px-3" href="#">Sign out</a> -->
                 <div class="dropdown px-3 float-end">
                     <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
                         id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
-                        <strong>{{username}}</strong>
+                        <strong>{{ username }}</strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser"
                         data-popper-placement="bottom-end"
                         style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate3d(-119px, 34px, 0px);">
-                        <li><a class="dropdown-item" href="#">New project...</a></li>
-                        <li><a class="dropdown-item" href="#">Settings</a></li>
-                        <li><a class="dropdown-item" href="#">Profile</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
+                        <div v-if="role != 'admin'">
+                            <li><a class="dropdown-item" href="/album/new">New Album</a></li>
+                            <li><a class="dropdown-item" href="#">Upload a song</a></li>
+                            <!-- Add a separate page to see profile page where all playlists and all reviews by user are displayed, maybe in second version of the app-->
+                            <!-- <li><a class="dropdown-item" href="#">Profile</a></li> -->
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                        </div>
                         <router-link to="/logout" class="dropdown-item">logout</router-link>
                     </ul>
                 </div>
@@ -33,17 +37,19 @@
 <script>
 export default {
     name: 'TopNav',
-    data: function (){
+    data: function () {
         return {
-            username: localStorage.getItem("username")
+            username: localStorage.getItem("username"),
+            role: localStorage.getItem("role")
         }
     }
 }
 </script>
 <style>
-.navbar-toggler:focus{
+.navbar-toggler:focus {
     box-shadow: 0 0 0 0.10rem var(--bp-khaki) !important;
 }
+
 .navbar-brand {
     padding-top: .75rem;
     padding-bottom: .75rem;

@@ -5,3 +5,4 @@ backend/application/__pycache__/
 .vscode/
 backend/db_directory/
 backend/static/*
+project_log.md

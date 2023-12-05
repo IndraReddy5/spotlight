@@ -18,9 +18,35 @@ a{
   text-decoration: none ;
 }
 
+.approve:hover{
+  color: green;
+}
 
+.reject:hover{
+  color:red;
+}
 
+.nav-link:hover{
+  color: var(--bp-khaki);
+}
 
+.read:hover{
+  color: var(--bp-khaki);
+}
+
+@media (min-width: 768px) {
+  .main_body {
+    margin-left: 25% !important;
+    width: 75%;
+  }
+}
+
+@media (min-width: 992px) {
+  .main_body {
+    margin-left: 16.67% !important;
+    width: 83.33%;
+  }
+}
 
 
 /*************************************************************** Default Code ***************************************************************/
