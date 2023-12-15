@@ -50,47 +50,73 @@ class Admin_Change_Password_API(Resource):
             return "Password Changed", 200
         else:
             raise NotFound(status_code=404, error_message="User not found")
-        
+
+
 class Admin_Get_Dashboard_Stats_API(Resource):
     @roles_required("admin")
     @auth_required("token")
     def get(self):
         """Gets the stats that are required for the admin dashboard"""
         return_json = {}
-        return_json["pending_genre_req"] = Genre.query.filter_by(admin_approval="Pending").count()
-        return_json["pending_album_flag_req"] = AlbumsFlagged.query.filter_by(admin_read=False).count()
-        return_json["pending_song_flag_req"] = SongsFlagged.query.filter_by(admin_read=False).count()
+        return_json["pending_genre_req"] = Genre.query.filter_by(
+            admin_approval="Pending"
+        ).count()
+        return_json["pending_album_flag_req"] = AlbumsFlagged.query.filter_by(
+            admin_read=False
+        ).count()
+        return_json["pending_song_flag_req"] = SongsFlagged.query.filter_by(
+            admin_read=False
+        ).count()
         return_json["total_users"] = Users.query.count()
         return_json["Melophiles"] = RolesUsers.query.filter_by(role_id=4).count()
         return_json["Patrons"] = RolesUsers.query.filter_by(role_id=2).count()
         return_json["Creators"] = RolesUsers.query.filter_by(role_id=3).count()
         return_json["total_songs"] = Songs.query.count()
-        songs = SongRatings.query.with_entities(func.sum(SongRatings.rating)/func.count(SongRatings.rating), SongRatings.song_id).group_by(SongRatings.song_id).all()
+        songs = (
+            SongRatings.query.with_entities(
+                func.sum(SongRatings.rating) / func.count(SongRatings.rating),
+                SongRatings.song_id,
+            )
+            .group_by(SongRatings.song_id)
+            .all()
+        )
         genres = Genre.query.all()
         genre_data = []
         for genre in genres:
-            genre_data.append({"name":genre.genre,"value":SongGenre.query.filter_by(genre_id=genre.id).count()})
+            genre_data.append(
+                {
+                    "name": genre.genre,
+                    "value": SongGenre.query.filter_by(genre_id=genre.id).count(),
+                }
+            )
         return_json["genre_data"] = genre_data
-        song_range_dict = {'1-2': 0, '2-3': 0, '3-3.5': 0, '3.5-4': 0, '4-4.5': 0, '4.5-5': 0}
+        song_range_dict = {
+            "1-2": 0,
+            "2-3": 0,
+            "3-3.5": 0,
+            "3.5-4": 0,
+            "4-4.5": 0,
+            "4.5-5": 0,
+        }
         for song in songs:
             r = float(song._data[0])
             if r <= 5 and r >= 4.5:
                 song_range_dict["4.5-5"] += 1
-            elif r < 4.5 and r >=4:
+            elif r < 4.5 and r >= 4:
                 song_range_dict["4-4.5"] += 1
-            elif r < 4 and r >=3.5:
+            elif r < 4 and r >= 3.5:
                 song_range_dict["3.5-4"] += 1
-            elif r < 3.5 and r >=3:
+            elif r < 3.5 and r >= 3:
                 song_range_dict["3-3.5"] += 1
-            elif r < 3 and r >=2:
+            elif r < 3 and r >= 2:
                 song_range_dict["2-3"] += 1
-            elif r < 2 and r >=1:
+            elif r < 2 and r >= 1:
                 song_range_dict["1-2"] += 1
             else:
                 pass
         song_rating_data = []
-        for key in ['1-2', '2-3', '3-3.5', '3.5-4', '4-4.5', '4.5-5']:
-            song_rating_data.append({"range":key,"frequency":song_range_dict[key]})
+        for key in ["1-2", "2-3", "3-3.5", "3.5-4", "4-4.5", "4.5-5"]:
+            song_rating_data.append({"range": key, "frequency": song_range_dict[key]})
         return_json["song_rating_data"] = song_rating_data
 
         return json.loads(json.dumps(return_json)), 200
@@ -613,12 +639,20 @@ class Creator_Genre_Req_API(Resource):
     def post(self):
         """Creates a genre request."""
         form_data = request.get_json()
-        genre_obj = Genre()
-        genre_obj.genre = form_data.get("genre")
-        genre_obj.requested_by = current_user.id
-        db.session.add(genre_obj)
-        db.session.commit()
-        return "Genre request created", 200
+        genre_obj = Genre.query.filter_by(genre=form_data.get("genre")).first()
+        if genre_obj:
+            raise ValidationError(
+                status_code=400,
+                error_code="genre_exists",
+                error_message="Genre already exists",
+            )
+        else:
+            genre_obj = Genre()
+            genre_obj.genre = form_data.get("genre")
+            genre_obj.requested_by = current_user.id
+            db.session.add(genre_obj)
+            db.session.commit()
+            return "Genre request created", 200
 
 
 class Creator_Add_Song_Genre_API(Resource):
@@ -721,13 +755,17 @@ class Common_Playlists_By_User_API(Resource):
         if playlist_obj:
             if playlist_obj.melophile_id == current_user.id:
                 return_json = {}
-                return_json['playlist_name'] = playlist_obj.name
-                return_json['songs'] = {}
+                return_json["playlist_name"] = playlist_obj.name
+                return_json["songs"] = {}
                 for song in playlist_obj.playlist_songs:
-                    return_json['songs'][song.id] = {
+                    return_json["songs"][song.id] = {
                         "song_id": song.song_id,
                         "song_name": song.song_info.name,
-                        "cover_image": 'static/Song_Images/' + song.song_info.cover_image if song.song_info.cover_image else 'static/Album_Images/' + song.song_info.song_album_info.cover_image,
+                        "cover_image": "static/Song_Images/"
+                        + song.song_info.cover_image
+                        if song.song_info.cover_image
+                        else "static/Album_Images/"
+                        + song.song_info.song_album_info.cover_image,
                         "album_name": song.song_info.song_album_info.album_name,
                         "artists": song.song_info.song_album_info.artists_names,
                     }
@@ -857,6 +895,27 @@ class Common_Get_Role_API(Resource):
                 return role, 200
 
 
+class Common_Genre_API(Resource):
+    @auth_required("token")
+    def get(self):
+        """Returns all admin approved genres or genres requested by a creator."""
+        user = request.args.get("req_by")
+        return_json = []
+        genres = []
+        if user == current_user.username:
+            genres = Genre.query.filter_by(requested_by=current_user.id).all()
+        else:
+            genres = Genre.query.filter_by(admin_approval="Yes").all()
+        for genre in genres:
+            if genre.admin_approval == "No":
+                return_json.append((genre.genre, "Rejected"))
+            if genre.admin_approval == "Yes":
+                return_json.append((genre.genre, "Approved"))
+            else:
+                return_json.append((genre.genre, genre.admin_approval))
+        return return_json, 200
+
+
 class Common_Get_Songs_List_API(Resource):
     @auth_required("token")
     def get(self):
@@ -904,7 +963,7 @@ class Common_Get_Songs_List_API(Resource):
                 return_json[song]["release_date"]
             )
         if limit:
-            return_json = dict(list(return_json.items())[:int(limit)])
+            return_json = dict(list(return_json.items())[: int(limit)])
         return return_json, 200
 
 

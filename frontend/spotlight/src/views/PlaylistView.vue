@@ -7,7 +7,7 @@
                 <div>
                     <h1 style="color:var(--maize);" class="text-center"> {{ playlistName }}</h1>
                     <br>
-                    <div class="p-3 bg-dark rounded box-shadow">
+                    <div class="p-3 bg-dark rounded box-shadow" v-if="getPlaylistSongsLength() >= 1">
                         <div class="media pt-3 d-flex justify-content-start mb-0 pb-3 border-bottom"
                             v-for="value in playlistSongs">
                             <div class="position-relative SongImgClass">
@@ -29,6 +29,7 @@
                             </p>
                         </div>
                     </div>
+                    <p class="text-center" v-else> You don't have any songs in this playlist.</p>
                 </div>
             </main>
         </div>
@@ -77,14 +78,19 @@ export default {
     methods: {
         getImageUrl(imageUrl) {
             return __BACKEND_URL__ + imageUrl;
+        },
+        getPlaylistSongsLength() {
+            if (this.playlistSongs == []) {
+                return 0;
+            }
+            return Object.keys(this.playlistSongs).length;
         }
     }
 }
 </script>
 <style>
-.overlayPlay{
-    top:10%;
-    left:0%;
+.overlayPlay {
+    top: 10%;
+    left: 0%;
 }
-   
 </style>

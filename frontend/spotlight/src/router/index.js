@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
 import UserLogin from '@/views/UserLogin.vue'
 import SignUp from '@/views/SignUp.vue'
 import AdminLogin from '@/views/AdminLogin.vue'
@@ -9,13 +8,13 @@ import AdminDashboard from '@/views/AdminDashboard.vue'
 import CreatePlaylist from '@/views/CreatePlaylist.vue'
 import PlaylistView from '@/views/PlaylistView.vue'
 import CreateAlbum from '@/views/CreateAlbum.vue'
+import GenreRequest from '@/views/GenreRequest.vue'
 
 const routes = [
   {
     path: '/',
     redirect: '/login',
     name: 'home',
-    component: HomeView
   },
   {
     path: '/login',
@@ -123,6 +122,20 @@ const routes = [
       }
       if (localStorage.getItem("role") != "creator") {
         alert("you cannot create albums"); 
+        return "/dashboard";
+      }
+    }
+  },
+  {
+    path: "/genre/new",
+    name: "newGenre",
+    component: GenreRequest,
+    beforeEnter() {
+      if (!localStorage.getItem("Auth-Token")) {
+        return "/login";
+      }
+      if (localStorage.getItem("role") != "creator") {
+        alert("you cannot request for new genres"); 
         return "/dashboard";
       }
     }

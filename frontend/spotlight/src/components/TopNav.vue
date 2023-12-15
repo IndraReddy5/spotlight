@@ -18,8 +18,9 @@
                     <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser"
                         data-popper-placement="bottom-end"
                         style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate3d(-119px, 34px, 0px);">
-                        <div v-if="role != 'admin'">
+                        <div v-if="role == 'creator'">
                             <li><a class="dropdown-item" href="/album/new">New Album</a></li>
+                            <li><a class="dropdown-item" href="/genre/new">Request New Genre</a></li>
                             <li><a class="dropdown-item" href="#">Upload a song</a></li>
                             <!-- Add a separate page to see profile page where all playlists and all reviews by user are displayed, maybe in second version of the app-->
                             <!-- <li><a class="dropdown-item" href="#">Profile</a></li> -->

@@ -87,7 +87,7 @@ class Songs(db.Model):
 class Genre(db.Model):
     __tablename__ = "genre"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    genre = db.Column(db.String)
+    genre = db.Column(db.String, unique=True)
     admin_approval = db.Column(db.String, default="Pending")
     requested_by = db.Column(db.Integer, db.ForeignKey("users.id"))
     songs_rel = db.relationship("SongGenre", foreign_keys="SongGenre.genre_id",backref="genre_table")
