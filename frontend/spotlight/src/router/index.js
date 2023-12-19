@@ -9,6 +9,7 @@ import CreatePlaylist from '@/views/CreatePlaylist.vue'
 import PlaylistView from '@/views/PlaylistView.vue'
 import CreateAlbum from '@/views/CreateAlbum.vue'
 import GenreRequest from '@/views/GenreRequest.vue'
+import AddSong from '@/views/AddSong.vue'
 
 const routes = [
   {
@@ -116,6 +117,20 @@ const routes = [
     path: "/album/new",
     name: "newAlbum",
     component: CreateAlbum,
+    beforeEnter() {
+      if (!localStorage.getItem("Auth-Token")) {
+        return "/login";
+      }
+      if (localStorage.getItem("role") != "creator") {
+        alert("you cannot create albums"); 
+        return "/dashboard";
+      }
+    }
+  },
+  {
+    path: "/song/new",
+    name: "newSong",
+    component: AddSong,
     beforeEnter() {
       if (!localStorage.getItem("Auth-Token")) {
         return "/login";

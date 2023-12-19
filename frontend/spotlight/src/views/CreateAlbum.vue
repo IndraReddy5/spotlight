@@ -59,7 +59,7 @@ import SideNav from '@/components/SideNav.vue';
 import TopNav from '@/components/TopNav.vue';
 import { useVuelidate } from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
-import { isImage } from '@/utils/imageValidator';
+import { isImage } from '@/utils/Validator';
 
 export default {
     setup() {
