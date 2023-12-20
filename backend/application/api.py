@@ -712,7 +712,7 @@ class Common_Song_Play_API(Resource):
                 "lyrics_url": 'static/lyrics/' + song_obj.lyrics_url,
                 "duration": song_obj.duration,
                 "release_date": prettify_date(song_obj.release_date),
-                "cover_image": 'static/Song_Images/' + song_obj.cover_image if song_obj.cover_image else 'static/Album_Images' + song_obj.song_album_info.cover_image,
+                "cover_image": 'static/Song_Images/' + song_obj.cover_image if song_obj.cover_image else 'static/Album_Images/' + song_obj.song_album_info.cover_image,
                 "genres": [genre.genre_table.genre for genre in genres],
             }
         # Todo

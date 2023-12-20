@@ -6,34 +6,41 @@
                 <SideNav />
                 <main class="me-lg-auto ms-md-auto col-md-8 col-lg-5 px-md-4 pt-5">
                     <div>
-                        <h1 style="color:var(--maize);" class="text-center">Create a new Album</h1>
+                        <h1 style="color:var(--maize);" class="text-center">Create a new Song</h1>
                         <br>
                         <form method="POST" @submit.prevent="handleFormSubmit">
                             <div class="form-floating mb-3">
-                                <input type="text" :class='{ "form-control": true, "is-invalid": v$.albumName.$error }'
-                                    v-model="albumName" name="albumName" id="floatingInput1" placeholder="album name"
+                                <input type="text" :class='{ "form-control": true, "is-invalid": v$.songName.$error }'
+                                    v-model="songName" name="songName" id="floatingInput1" placeholder="song name"
                                     autocomplete="off">
-                                <label for="floatingInput1">album name</label>
-                                <div class="invalid-feedback" style="color: #dc3545 !important" v-if="v$.albumName.$error">
-                                    <span>{{ v$.albumName.$errors[0].$message }}</span>
+                                <label for="floatingInput1">song name</label>
+                                <div class="invalid-feedback" style="color: #dc3545 !important" v-if="v$.songName.$error">
+                                    <span>{{ v$.songName.$errors[0].$message }}</span>
                                 </div>
                             </div>
                             <div class="form-floating mb-3">
-                                <input type="text" :class='{ "form-control": true, "is-invalid": v$.artistsNames.$error }'
-                                    v-model="artistsNames" name="artistsNames" id="floatingInput2"
-                                    placeholder="artists names" autocomplete="off">
-                                <label for="floatingInput2">artists names</label>
-                                <div class="invalid-feedback" style="color: #dc3545 !important"
-                                    v-if="v$.artistsNames.$error">
-                                    <span>{{ v$.artistsNames.$errors[0].$message }}</span>
+                                <input type="text" :class='{ "form-control": true, "is-invalid": v$.duration.$error }'
+                                    v-model="duration" name="duration" id="floatingInput1" placeholder="duration of song in seconds"
+                                    autocomplete="off">
+                                <label for="floatingInput1">duration of song in seconds</label>
+                                <div class="invalid-feedback" style="color: #dc3545 !important" v-if="v$.duration.$error">
+                                    <span>{{ v$.duration.$errors[0].$message }}</span>
                                 </div>
                             </div>
+                            <div class="form-floating mb-3">
+                                <select v-model="albumID">
+                                    <!-- inline object literal -->
+                                    <option value="" disabled selected>Select Album</option>
+                                    <option :value="key" v-for="album, key, index in creatorAlbums">{{ album.album_name }}
+                                    </option>
+                                </select>
+                            </div>
                             <div class="mb-3">
-                                <label for="formFile"
-                                    :class='{ "form-label": true, "is-invalid": v$.lyrics.$error }'>Upload lyrics file
+                                <label for="formFile" :class='{ "form-label": true, "is-invalid": v$.lyrics.$error }'>Upload
+                                    lyrics file
                                 </label>
-                                <input class="form-control" type="file" id="formFile"
-                                    accept=".txt" @:change="onTextFileChange">
+                                <input class="form-control" type="file" id="formFile" accept=".txt"
+                                    @:change="onTextFileChange">
                                 <div class="invalid-feedback" style="color: #dc3545 !important" v-if="v$.lyrics.$error">
                                     <span>{{ v$.lyrics.$errors[0].$message }}</span>
                                 </div>
@@ -52,8 +59,8 @@
                                 <label for="formFile"
                                     :class='{ "form-label": true, "is-invalid": v$.songFile.$error }'>Upload Song File
                                 </label>
-                                <input class="form-control" type="file" id="formFile"
-                                    accept="audio/mpeg" @:change="onSongFileChange">
+                                <input class="form-control" type="file" id="formFile" accept="audio/mpeg"
+                                    @:change="onSongFileChange">
                                 <div class="invalid-feedback" style="color: #dc3545 !important" v-if="v$.songFile.$error">
                                     <span>{{ v$.songFile.$errors[0].$message }}</span>
                                 </div>
@@ -78,7 +85,7 @@
 import SideNav from '@/components/SideNav.vue';
 import TopNav from '@/components/TopNav.vue';
 import { useVuelidate } from '@vuelidate/core'
-import { required, helpers } from '@vuelidate/validators'
+import { required, helpers, numeric } from '@vuelidate/validators'
 import { isImage, isText, isAudio } from '@/utils/Validator';
 
 export default {
@@ -94,8 +101,10 @@ export default {
     },
     data: function () {
         return {
-            albumName: '',
-            artistsNames: '',
+            creatorAlbums: '',
+            duration: '',
+            songName: '',
+            albumID: '',
             coverImage: '',
             songFile: '',
             lyrics: '',
@@ -104,25 +113,42 @@ export default {
         }
     },
     validations: {
-        albumName: {
+        songName: {
             required: helpers.withMessage('The album name field is required', required),
             alphaNum: helpers.withMessage('don\'t include special characters in album names', helpers.regex(/^[a-zA-Z ]*$/))
         },
-        artistsNames: {
-            required: helpers.withMessage('The artists names are required', required),
-            alphaNum: helpers.withMessage('don\'t include special characters in artists names', helpers.regex(/^[a-zA-Z ,]*$/))
+        duration: {
+            required: helpers.withMessage('The duration field is required', required),
+            numeric: helpers.withMessage('The duration field must be only in seconds', helpers.regex(/^[0-9]*$/))
+        },
+        albumID: {
+            required: helpers.withMessage('The album id is required', required),
         },
         coverImage: {
             isImage
         },
         lyrics: {
-            required: helpers.withMessage('The cover image is required', required),
-            isText
+            isText,
+            required: helpers.withMessage('The lyrics file is required', required),
         },
         songFile: {
-            required: helpers.withMessage('The cover image is required', required),
-            isAudio
+            isAudio,
+            required: helpers.withMessage('The song file is required', required),
         }
+    },
+    async beforeMount() {
+        await fetch(__API_URL__ + 'albums?creator_name=' + localStorage.getItem('username'), {
+            headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
+            'method': 'GET'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data != {}) {
+                    if (data == "No albums found") { alert("create a album first"), this.$router.push({ name: 'newAlbum' }) }
+                    else
+                        this.creatorAlbums = JSON.parse(data);
+                }
+            });
     },
     methods: {
         handleFormSubmit: async function () {
@@ -131,15 +157,18 @@ export default {
                 const headers = { 'Auth-Token': localStorage.getItem('Auth-Token') };
                 const formdata = new FormData();
                 formdata.append("album_id", this.albumID);
-                formdata.append("artists_names", this.artistsNames);
-                formdata.append("cover_image", this.coverImage, this.coverImage.name);
+                formdata.append("song_name", this.songName);
+                if (this.coverImage != '') { formdata.append("cover_image", this.coverImage, this.coverImage.name); }
+                formdata.append("lyrics_file", this.lyrics, this.lyrics.name);
+                formdata.append("audio_file", this.songFile, this.songFile.name)
 
-                await fetch(__API_URL__ + "creator/album/new", {method: 'POST', body: formdata, headers: headers})
+
+                await fetch(__API_URL__ + "creator/song/new", { method: 'POST', body: formdata, headers: headers })
                     .then(response => {
                         return response.json();
                     })
                     .then(data => {
-                        if (data == 'Album created') {
+                        if (data == 'Song created') {
                             this.errStatus = false;
                             this.$router.push({ name: 'dashboard' })
                         }
@@ -161,6 +190,10 @@ export default {
         onTextFileChange(e) {
             const file = e.target.files[0];
             this.lyrics = file;
+        },
+        onSongFileChange(e) {
+            const file = e.target.files[0];
+            this.songFile = file;
         }
     }
 }

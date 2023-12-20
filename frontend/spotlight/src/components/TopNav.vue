@@ -27,7 +27,7 @@
                         <div v-if="role == 'creator'">
                             <li><a class="dropdown-item" href="/album/new">New Album</a></li>
                             <li><a class="dropdown-item" href="/genre/new">Request New Genre</a></li>
-                            <li><a class="dropdown-item" href="#">Upload a song</a></li>
+                            <li><a class="dropdown-item" href="/song/new">Upload a song</a></li>
                             <!-- Add a separate page to see profile page where all playlists and all reviews by user are displayed, maybe in second version of the app-->
                             <!-- <li><a class="dropdown-item" href="#">Profile</a></li> -->
                             <li>

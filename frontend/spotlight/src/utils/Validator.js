@@ -4,7 +4,7 @@ import { helpers } from '@vuelidate/validators'
 
 const imageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
 const textTypes = ['text/plain']
-const audioTypes = ['audio/mpeg']
+const audioTypes = ['audio/mpeg', 'audio/mp3']
 
 export const isImage = helpers.withMessage('The cover image must be a valid image, only jpeg/jpg/png/gif formats are accepted', (file) => {
     if (!file) return false;

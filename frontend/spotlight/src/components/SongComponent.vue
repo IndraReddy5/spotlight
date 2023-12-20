@@ -14,7 +14,7 @@
                 </div>
                 <div class="col-8 position-relative">
                     <div class="float-start">
-                        <div class="pt-2">{{ SongName }}</div>
+                        <div class="pt-2"><a :href=generateSongUrl(sid) style="color: white;"> {{ SongName }}</a></div>
                     </div>
                     <div class="d-flex justify-content-between SongComponentSecondary end-20 bottom-0 position-absolute">
                         <strong><em>{{ SongDuration }} secs</em></strong>
@@ -33,10 +33,14 @@ export default {
         ReleaseDate: String,
         SongDuration: Number,
         imageSource: String,
+        sid: Object,
     },
     methods: {
         generateUrl(src) {
             return __BACKEND_URL__ + src;
+        },
+        generateSongUrl(id) {
+            return "/song/" + id;
         }
     }
 }

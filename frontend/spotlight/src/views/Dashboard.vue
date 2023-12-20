@@ -8,7 +8,15 @@
           <div class="container pt-5">
             <h6>New Songs</h6>
             <div class="row g-0 row-cols-auto flex-wrap" v-if="newSongs">
-              <SongComponent :SongName="value.song_name" :ReleaseDate="value.release_date[0]" :SongDuration="value.duration" :imageSource="value.cover_image" v-for="value in newSongs"></SongComponent>
+              <SongComponent 
+              v-for="(value,key,index) in newSongs"
+              :key="index"
+              :SongName="value.song_name" 
+              :ReleaseDate="value.release_date[0]" 
+              :SongDuration="value.duration" 
+              :imageSource="value.cover_image" 
+              :sid="value" 
+              ></SongComponent>
             </div>
             <div class="row g-0 row-cols-auto flex-wrap" v-else>
               <h6 class="d-flex justify-content-between align-items-center mt-2 mb-1">

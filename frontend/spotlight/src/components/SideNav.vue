@@ -7,7 +7,7 @@
       <ul class="nav flex-column mb-2" v-if="topSongs">
         <!-- showing top 5 songs -->
         <li class="nav-item" v-for="(value, key) in topSongs">
-          <a class="nav-link" href="#" style="text-transform:capitalize;">{{ value.song_name }}</a>
+          <a class="nav-link" :href=getSongLink(key) style="text-transform:capitalize;">{{ value.song_name }}</a>
         </li>
       </ul>
       <ul class="nav flex-column mb-3" v-else>
@@ -95,6 +95,9 @@ export default {
   methods: {
     getPlaylistLink(playlistID) {
       return '/playlist/' + playlistID;
+    },
+    getSongLink(songID) {
+      return '/song/' + songID;
     }
   
   }
