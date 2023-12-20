@@ -92,7 +92,8 @@ export default {
       .then(response => response.json())
       .then(data => {
         if (data != {}) {
-          this.creatorAlbums = JSON.parse(data);
+          if (data == 'No albums found') { this.creatorAlbums = null; }
+          else { this.creatorAlbums = JSON.parse(data); }
         }
       });
     await fetch(__API_URL__ + 'creator/' + localStorage.getItem('username') + '/rating', {

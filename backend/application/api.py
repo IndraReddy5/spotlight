@@ -701,8 +701,24 @@ class Creator_Add_Song_Genre_API(Resource):
 class Common_Song_Play_API(Resource):
     @auth_required("token")
     def get(self, id):
+        song_obj = Songs.query.filter_by(id=id).first()
+        genres = SongGenre.query.filter_by(song_id=id).all()
+        if song_obj:
+            return_json = {
+                "song_url": 'static/songs/' + song_obj.song_url,
+                "name": song_obj.name,
+                "album_name": song_obj.song_album_info.album_name,
+                "artists_names": song_obj.song_album_info.artists_names,
+                "lyrics_url": 'static/lyrics/' + song_obj.lyrics_url,
+                "duration": song_obj.duration,
+                "release_date": prettify_date(song_obj.release_date),
+                "cover_image": 'static/Song_Images/' + song_obj.cover_image if song_obj.cover_image else 'static/Album_Images' + song_obj.song_album_info.cover_image,
+                "genres": [genre.genre_table.genre for genre in genres],
+            }
         # Todo
-        return "Song played", 200
+            return return_json, 200
+        else:
+            raise NotFound(status_code=404, error_message="Song not found")
 
 
 class Common_Albums_By_Creator_API(Resource):

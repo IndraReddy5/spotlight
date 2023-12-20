@@ -51,6 +51,7 @@ def create_app():
     )
     api.add_resource(Common_Search_API, "/api/search/song")
     api.add_resource(Common_Creator_Avg_Rating_API, "/api/creator/<string:name>/rating")
+    api.add_resource(Common_Song_Play_API, "/api/play/song/<int:id>")
     api.add_resource(Common_Get_Role_API, "/api/getrole")
     api.add_resource(Common_Genre_API, "/api/genre")
     api.add_resource(Common_Get_Songs_List_API, "/api/songs")

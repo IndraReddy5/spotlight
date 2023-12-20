@@ -18,6 +18,12 @@
                     <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser"
                         data-popper-placement="bottom-end"
                         style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate3d(-119px, 34px, 0px);">
+                        <div v-if="role == 'melophile'">
+                            <li><a class="dropdown-item" @click="newPatron()">Sign up as Patron</a></li>
+                        </div>
+                        <div v-if="role == 'patron' || role == 'melophile'">
+                            <li><a class="dropdown-item" @click="newCreator()">Sign up as Creator</a></li>
+                        </div>
                         <div v-if="role == 'creator'">
                             <li><a class="dropdown-item" href="/album/new">New Album</a></li>
                             <li><a class="dropdown-item" href="/genre/new">Request New Genre</a></li>
@@ -42,6 +48,56 @@ export default {
         return {
             username: localStorage.getItem("username"),
             role: localStorage.getItem("role")
+        }
+    },
+    methods: {
+        async newCreator() {
+            const headers = { 'Content-Type': 'application/json', 'Auth-Token': localStorage.getItem('Auth-Token') }
+            await fetch(__API_URL__ + "creator/signup/" + localStorage.getItem("username"), { headers: headers, method: "POST" })
+                .then(response => {
+                    return response.json();
+                })
+                .then(data => {
+                    if (data == 'Time to shine on Spotlight with your creations') {
+                        localStorage.setItem("role", "creator");
+                        alert("You are now a creator, you can see your new dashboard now")
+                        this.errStatus = false;
+                        this.$router.push({ name: 'dashboard' })
+                    }
+                    else {
+                        this.errStatus = true;
+                        console.log(data.error_message);
+                        throw new Error(data.error_message);
+                    }
+                })
+                .catch((error) => {
+                    this.errormsg = error;
+                    console.log(error)
+                })
+        },
+        async newPatron() {
+            const headers = { 'Content-Type': 'application/json', 'Auth-Token': localStorage.getItem('Auth-Token') }
+            await fetch(__API_URL__ + "patron/" + localStorage.getItem("username") + "/subscribe", { headers: headers, method: "POST" })
+                .then(response => {
+                    return response.json();
+                })
+                .then(data => {
+                    if (data == 'You are now a patron') {
+                        localStorage.setItem("role", "patron");
+                        alert("You are now a patron, redirecting you back to dashboard")
+                        this.errStatus = false;
+                        this.$router.push({ name: 'dashboard' })
+                    }
+                    else {
+                        this.errStatus = true;
+                        console.log(data.error_message);
+                        throw new Error(data.error_message);
+                    }
+                })
+                .catch((error) => {
+                    this.errormsg = error;
+                    console.log(error)
+                })
         }
     }
 }

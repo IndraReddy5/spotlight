@@ -10,6 +10,7 @@ import PlaylistView from '@/views/PlaylistView.vue'
 import CreateAlbum from '@/views/CreateAlbum.vue'
 import GenreRequest from '@/views/GenreRequest.vue'
 import AddSong from '@/views/AddSong.vue'
+import SongView from '@/views/SongView.vue'
 
 const routes = [
   {
@@ -98,7 +99,7 @@ const routes = [
         return "/login";
       }
       if (localStorage.getItem("role") == "admin") {
-        alert("Admins cannot create playlists"); 
+        alert("Admins cannot create playlists");
         return "/dashboard/a";
       }
     }
@@ -114,6 +115,16 @@ const routes = [
     }
   },
   {
+    path: "/song/:songID",
+    name: "songView",
+    component: SongView,
+    beforeEnter() {
+      if (!localStorage.getItem("Auth-Token")) {
+        return "/login";
+      }
+    }
+  },
+  {
     path: "/album/new",
     name: "newAlbum",
     component: CreateAlbum,
@@ -122,7 +133,7 @@ const routes = [
         return "/login";
       }
       if (localStorage.getItem("role") != "creator") {
-        alert("you cannot create albums"); 
+        alert("you cannot create albums");
         return "/dashboard";
       }
     }
@@ -136,7 +147,7 @@ const routes = [
         return "/login";
       }
       if (localStorage.getItem("role") != "creator") {
-        alert("you cannot create albums"); 
+        alert("you cannot create albums");
         return "/dashboard";
       }
     }
@@ -150,7 +161,7 @@ const routes = [
         return "/login";
       }
       if (localStorage.getItem("role") != "creator") {
-        alert("you cannot request for new genres"); 
+        alert("you cannot request for new genres");
         return "/dashboard";
       }
     }
