@@ -7,6 +7,7 @@ from flask_restful import Api
 from flask_security import Security
 from flask_cors import CORS
 
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 db = db
 api = Api()
