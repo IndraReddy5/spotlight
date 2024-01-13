@@ -10,7 +10,7 @@ from application.celery_config import create_celery_inst
 
 celery = create_celery_inst(app)
 cache = make_cache(app)
-gapp.app_context().push()
+app.app_context().push()
 
 db.create_all()
 
