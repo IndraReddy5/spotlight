@@ -9,13 +9,13 @@ SMTP_SERVER_HOST = "localhost"
 SMTP_SERVER_PORT = "1025"
 SENDER_ADDRESS = "noreply@spotlight.com"
 
-def send_email(to, subject, msg, attachment = None):
+def send_email(to, subject, message, attachment = None):
     mail = MIMEMultipart()
     mail['From'] = SENDER_ADDRESS
     mail['Subject'] = subject
     mail['To'] = to
 
-    mail.attach(MIMEText(msg, "html"))
+    mail.attach(MIMEText(message, "html"))
 
     if attachment:
         with open(attachment, "rb") as f:

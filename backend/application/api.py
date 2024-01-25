@@ -481,6 +481,7 @@ class Creator_Song_API(Resource):
         song_obj = Songs()
         song_obj.album_id = form_data.get("album_id")
         song_obj.name = form_data.get("song_name")
+        genres = form_data.get("genres").split(",")
         song_obj_cover_image_file = None
         if len(request.files) == 3:
             song_obj_cover_image_file = request.files["cover_image"]
@@ -526,6 +527,16 @@ class Creator_Song_API(Resource):
             )
         db.session.add(song_obj)
         db.session.commit()
+
+        for genre_name in genres:
+            print(genre_name)
+            song_genre_obj = SongGenre()
+            song_genre_obj.song_id = song_obj.id
+            genre_obj = Genre.query.filter_by(genre=genre_name).first()
+            song_genre_obj.genre_id = genre_obj.id
+            db.session.add(song_genre_obj)
+        db.session.commit()
+
         return "Song created", 200
 
     @roles_required("creator")
@@ -668,11 +679,6 @@ class Creator_Add_Song_Genre_API(Resource):
         ).first()
         if not song_genre_obj:
             if song_obj and genre_obj:
-                print(
-                    song_obj.song_album_info.creator_id,
-                    current_user.id,
-                    current_user.has_role("admin"),
-                )
                 if genre_obj.admin_approval == "Yes":
                     if (
                         song_obj.song_album_info.creator_id == current_user.id
@@ -705,17 +711,24 @@ class Common_Song_Play_API(Resource):
         genres = SongGenre.query.filter_by(song_id=id).all()
         if song_obj:
             return_json = {
-                "song_url": 'static/songs/' + song_obj.song_url,
+                "song_url": "static/songs/" + song_obj.song_url,
                 "name": song_obj.name,
                 "album_name": song_obj.song_album_info.album_name,
                 "artists_names": song_obj.song_album_info.artists_names,
-                "lyrics_url": 'static/lyrics/' + song_obj.lyrics_url,
+                "lyrics_url": "static/lyrics/" + song_obj.lyrics_url,
                 "duration": song_obj.duration,
                 "release_date": prettify_date(song_obj.release_date),
-                "cover_image": 'static/Song_Images/' + song_obj.cover_image if song_obj.cover_image else 'static/Album_Images/' + song_obj.song_album_info.cover_image,
+                "cover_image": "static/Song_Images/" + song_obj.cover_image
+                if song_obj.cover_image
+                else "static/Album_Images/" + song_obj.song_album_info.cover_image,
                 "genres": [genre.genre_table.genre for genre in genres],
+                "rating": rating_avg(
+                    SongRatings.query.with_entities(SongRatings.rating)
+                    .filter_by(song_id=id)
+                    .all()
+                ),
             }
-        # Todo
+            # Todo
             return return_json, 200
         else:
             raise NotFound(status_code=404, error_message="Song not found")
@@ -822,7 +835,7 @@ class Common_Playlists_By_User_API(Resource):
         """Removes a song from a playlist."""
         playlist_obj = Playlists.query.filter_by(id=playlist_id).first()
         if playlist_obj:
-            if playlist_obj.user_id == current_user.id:
+            if playlist_obj.melophile_id == current_user.id:
                 playlist_song_obj = PlaylistSongs.query.filter_by(
                     playlist_id=playlist_id, song_id=song_id
                 ).first()
@@ -839,12 +852,14 @@ class Common_Playlists_By_User_API(Resource):
         else:
             raise NotFound(status_code=404, error_message="Playlist not found")
 
+
+class Common_Delete_Playlist_API(Resource):
     @auth_required("token")
     def delete(self, playlist_id):
         """Deletes a playlist."""
         playlist_obj = Playlists.query.filter_by(id=playlist_id).first()
         if playlist_obj:
-            if playlist_obj.user_id == current_user.id:
+            if playlist_obj.melophile_id == current_user.id:
                 playlist_songs_objs_to_be_deleted = PlaylistSongs.query.filter_by(
                     playlist_id=playlist_id
                 ).all()
@@ -938,7 +953,11 @@ class Common_Get_Songs_List_API(Resource):
         """Returns all songs sorted by rating or release date."""
         sort_by = request.args.get("sort_by")
         limit = request.args.get("limit")
-        songs = Songs.query.all()
+        album_id = request.args.get("album_id")
+        if album_id:
+            songs = Songs.query.filter_by(album_id=album_id).all()
+        else:
+            songs = Songs.query.all()
         return_json = {}
         for song_obj in songs:
             return_json[song_obj.id] = {}
@@ -980,6 +999,12 @@ class Common_Get_Songs_List_API(Resource):
             )
         if limit:
             return_json = dict(list(return_json.items())[: int(limit)])
+        if album_id:
+            album_name = Albums.query.with_entities(Albums.album_name).filter_by(id = album_id).first()
+            if album_name:
+                return_json["album_name"] = album_name[0]
+            else:
+                return_json["album_name"] = "Album not found"
         return return_json, 200
 
 
@@ -1131,13 +1156,17 @@ class Melophile_Flag_Album_API(Resource):
 class Melophile_Rate_Song_API(Resource):
     @roles_accepted("melophile", "patron")
     @auth_required("token")
-    def post(self, id):
+    def put(self, id):
         """Rates a song"""
         form_data = request.get_json()
         rating = form_data.get("rating")
         song_obj = Songs.query.filter_by(id=id).first()
         if song_obj:
-            song_rating_obj = SongRatings()
+            song_rating_obj = SongRatings.query.filter_by(
+                song_id=id, melophile_id=current_user.id
+            ).first()
+            if not song_rating_obj:
+                song_rating_obj = SongRatings()
             song_rating_obj.song_id = id
             song_rating_obj.melophile_id = current_user.id
             song_rating_obj.rating = rating
@@ -1190,3 +1219,67 @@ class Melophile_Add_Song_Playlist_API(Resource):
                 raise Unauthorized(error_message="you cannot add to this playlist")
         else:
             raise NotFound(status_code=404, error_message="Playlist not found")
+
+
+class Search_API(Resource):
+    @auth_required("token")
+    def get(self):
+        """Searches for a song, similar to query, which can be artist / genre"""
+        query = request.args.get("query")
+        albums = Albums.query.filter(Albums.artists_names.like("%"+query+"%")).all()
+        genres = Genre.query.filter(Genre.genre.ilike(f"%{query}%")).all()
+        song_objs_ids = []
+        for album_obj in albums:
+            song_objs_ids.extend(
+                Songs.query.with_entities(Songs.id).filter_by(album_id=album_obj.id).all()
+            )
+        for genre_obj in genres:
+            song_objs_ids.extend(
+                SongGenre.query
+                .with_entities(SongGenre.song_id)
+                .filter_by(genre_id=genre_obj.id)
+                .all()
+            )
+        song_objs_ids = set(song_objs_ids)
+        song_objs = []
+        for sid in song_objs_ids:
+            s_obj = Songs.query.filter_by(id=sid[0]).first()
+            if s_obj:
+                song_objs.append(s_obj)
+        return_json = {}
+        for song_obj in song_objs:
+            return_json[song_obj.id] = {}
+            return_json[song_obj.id]["song_id"] = song_obj.id
+            return_json[song_obj.id]["song_name"] = song_obj.name
+            if song_obj.cover_image:
+                return_json[song_obj.id]["cover_image"] = (
+                    "static/Song_Images/" + song_obj.cover_image
+                )
+            else:
+                return_json[song_obj.id]["cover_image"] = (
+                    "static/Album_Images/" + song_obj.song_album_info.cover_image
+                )
+            return_json[song_obj.id]["album_name"] = song_obj.song_album_info.album_name
+            return_json[song_obj.id]["song_url"] = "static/songs/" + song_obj.song_url
+            return_json[song_obj.id]["lyrics_url"] = (
+                "static/lyrics/" + song_obj.lyrics_url
+            )
+            return_json[song_obj.id]["genre"] = [
+                x.genre_table.genre
+                for x in SongGenre.query.filter_by(song_id=song_obj.id).all()
+            ]
+            return_json[song_obj.id]["duration"] = song_obj.duration
+            return_json[song_obj.id]["release_date"] = song_obj.release_date
+            return_json[song_obj.id]["artists"] = song_obj.song_album_info.artists_names
+            return_json[song_obj.id]["rating"] = rating_avg(
+                SongRatings.query.with_entities(SongRatings.rating)
+                .filter_by(song_id=song_obj.id)
+                .all()
+            )
+        return_json = sort_by_rating(return_json)
+        for song in return_json:
+            return_json[song]["release_date"] = prettify_date(
+                return_json[song]["release_date"]
+            )
+        
+        return return_json, 200

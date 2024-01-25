@@ -20,9 +20,9 @@
                             </div>
                             <div class="form-floating mb-3">
                                 <input type="text" :class='{ "form-control": true, "is-invalid": v$.duration.$error }'
-                                    v-model="duration" name="duration" id="floatingInput1" placeholder="duration of song in seconds"
-                                    autocomplete="off">
-                                <label for="floatingInput1">duration of song in seconds</label>
+                                    v-model="duration" name="duration" id="floatingInput2"
+                                    placeholder="duration of song in seconds" autocomplete="off">
+                                <label for="floatingInput2">duration of song in seconds</label>
                                 <div class="invalid-feedback" style="color: #dc3545 !important" v-if="v$.duration.$error">
                                     <span>{{ v$.duration.$errors[0].$message }}</span>
                                 </div>
@@ -65,8 +65,14 @@
                                     <span>{{ v$.songFile.$errors[0].$message }}</span>
                                 </div>
                             </div>
+                            <div class="mb-3">
+                                <h6>Select Genres for Song</h6>
+                                <multiselect v-model="picked_genres" :options="genres" mode="multiple" name="genres"
+                                    :close-on-select="false" :hide-selected="false" style="color: black;" required>
+                                </multiselect>
+                            </div>
                             <button class="w-100 btn btn-lg" type="submit"
-                                style="background-color: var(--bp-khaki); color: var(--bp-white);">Create Album</button>
+                                style="background-color: var(--bp-khaki); color: var(--bp-white);">Add song</button>
                             <hr class="my-4">
                             <div class="alert alert-danger alert-dismissible fade show" role="alert" v-if="errStatus">
                                 <strong>{{ errormsg }}</strong>.
@@ -84,9 +90,11 @@
 <script>
 import SideNav from '@/components/SideNav.vue';
 import TopNav from '@/components/TopNav.vue';
+import Multiselect from '@vueform/multiselect'
 import { useVuelidate } from '@vuelidate/core'
 import { required, helpers, numeric } from '@vuelidate/validators'
 import { isImage, isText, isAudio } from '@/utils/Validator';
+
 
 export default {
     setup() {
@@ -97,7 +105,8 @@ export default {
     name: 'AddSong',
     components: {
         SideNav,
-        TopNav
+        TopNav,
+        Multiselect,
     },
     data: function () {
         return {
@@ -109,13 +118,15 @@ export default {
             songFile: '',
             lyrics: '',
             errStatus: false,
-            errormsg: ''
+            errormsg: '',
+            picked_genres: [],
+            genres: [],
         }
     },
     validations: {
         songName: {
             required: helpers.withMessage('The album name field is required', required),
-            alphaNum: helpers.withMessage('don\'t include special characters in album names', helpers.regex(/^[a-zA-Z ]*$/))
+            alphaNum: helpers.withMessage('don\'t include special characters in album names', helpers.regex(/^[a-zA-Z0-9 ]*$/))
         },
         duration: {
             required: helpers.withMessage('The duration field is required', required),
@@ -149,6 +160,18 @@ export default {
                         this.creatorAlbums = JSON.parse(data);
                 }
             });
+
+        await fetch(__API_URL__ + 'genre', {
+            headers: { 'content-type': 'application/json', "Auth-Token": localStorage.getItem("Auth-Token") },
+            'method': 'GET'
+        })
+            .then(response => response.json())
+            .then(data => {
+                let res = data;
+                for (let x in res) {
+                    this.genres.push(res[x][0])
+                }
+            });
     },
     methods: {
         handleFormSubmit: async function () {
@@ -161,6 +184,8 @@ export default {
                 if (this.coverImage != '') { formdata.append("cover_image", this.coverImage, this.coverImage.name); }
                 formdata.append("lyrics_file", this.lyrics, this.lyrics.name);
                 formdata.append("audio_file", this.songFile, this.songFile.name)
+                formdata.append("duration", this.duration)
+                formdata.append("genres", this.picked_genres)
 
 
                 await fetch(__API_URL__ + "creator/song/new", { method: 'POST', body: formdata, headers: headers })
@@ -199,4 +224,4 @@ export default {
 }
 </script>
 
-<style></style>
+<style src="@vueform/multiselect/themes/default.css"></style>

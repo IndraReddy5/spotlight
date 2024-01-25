@@ -33,7 +33,7 @@ export default {
         ReleaseDate: String,
         SongDuration: Number,
         imageSource: String,
-        sid: Object,
+        sid: String,
     },
     methods: {
         generateUrl(src) {

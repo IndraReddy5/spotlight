@@ -11,6 +11,8 @@ import CreateAlbum from '@/views/CreateAlbum.vue'
 import GenreRequest from '@/views/GenreRequest.vue'
 import AddSong from '@/views/AddSong.vue'
 import SongView from '@/views/SongView.vue'
+import SearchView from '@/views/SearchView.vue'
+import AlbumView from '@/views/AlbumView.vue'
 
 const routes = [
   {
@@ -125,6 +127,16 @@ const routes = [
     }
   },
   {
+    path: "/album/:AlbumID",
+    name: "albumView",
+    component: AlbumView,
+    beforeEnter() {
+      if (!localStorage.getItem("Auth-Token")) {
+        return "/login";
+      }
+    }
+  },
+  {
     path: "/album/new",
     name: "newAlbum",
     component: CreateAlbum,
@@ -163,6 +175,17 @@ const routes = [
       if (localStorage.getItem("role") != "creator") {
         alert("you cannot request for new genres");
         return "/dashboard";
+      }
+    }
+  },
+  {
+    path: "/search",
+    name: "search",
+    component: SearchView,
+    props: ((route) => ({ query: route.query.query })),
+    beforeEnter() {
+      if (!localStorage.getItem("Auth-Token")) {
+        return "/login";
       }
     }
   },

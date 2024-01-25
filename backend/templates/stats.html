@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Daily reminder</title>
+</head>
+
+<body>
+    <h2> Hi {{username}},</h2>
+    <span>
+        These are your monthly stats for the month of {{month}}:
+    </span>
+    <br>
+    {% if songs_released > 0 %}
+    <span>
+        You have released {{songs_released}} songs this month.
+    </span>
+    {% endif %}
+    <br>
+    <span> <strong>Total Albums:</strong> {{total_albums}} </span> <br>
+    <span> <strong>Total Songs:</strong> {{total_songs}} </span> <br>
+    <span> <strong>Average Rating:</strong> {{average_rating}} </span> <br>
+</body>
+</html>

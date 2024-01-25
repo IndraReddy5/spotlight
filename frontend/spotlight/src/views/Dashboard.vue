@@ -15,7 +15,7 @@
               :ReleaseDate="value.release_date[0]" 
               :SongDuration="value.duration" 
               :imageSource="value.cover_image" 
-              :sid="value" 
+              :sid="key" 
               ></SongComponent>
             </div>
             <div class="row g-0 row-cols-auto flex-wrap" v-else>

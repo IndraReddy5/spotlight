@@ -5,8 +5,8 @@
             data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <input name="search" class="form-control form-control-dark w-100" type="text" placeholder="Search"
-            aria-label="Search">
+        <input name="search" class="form-control form-control-dark w-100" type="text" placeholder="Search by artist name / genre or just click enter here to view all songs"
+            aria-label="Search" v-model="query" @keyup.enter="SearchFor">
         <div class="navbar-nav topnav_user">
             <div class="nav-item text-nowrap">
                 <!-- <a class="nav-link px-3" href="#">Sign out</a> -->
@@ -47,7 +47,8 @@ export default {
     data: function () {
         return {
             username: localStorage.getItem("username"),
-            role: localStorage.getItem("role")
+            role: localStorage.getItem("role"),
+            query: "",
         }
     },
     methods: {
@@ -98,7 +99,11 @@ export default {
                     this.errormsg = error;
                     console.log(error)
                 })
+        },
+        SearchFor() {
+            window.location.href = "/search?query="+this.query
         }
+
     }
 }
 </script>

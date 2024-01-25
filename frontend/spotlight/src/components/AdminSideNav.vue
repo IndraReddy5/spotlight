@@ -89,7 +89,7 @@
         <li class="nav-item" v-for="(value, index) in getPendingSongFlagReq(pendingSongFlagReq)">
           <div class="d-flex justify-content-between w-100" v-if="index < 4">
             <div>
-              <a class="nav-link" href="#">
+              <a class="nav-link" :href="generateSongUrl(value.flag.song_id)">
                 {{ value.flag.song_name }}
               </a>
             </div>
@@ -172,6 +172,9 @@ export default {
     },
     getPendingSongFlagReq(arr) {
       return arr.slice(0, Math.min(5, arr.length));
+    },
+    generateSongUrl(sid) {
+      return "/song/" + sid;
     },
     async approveGenre(genreReq_id, index) {
       const body = {

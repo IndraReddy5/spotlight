@@ -4,9 +4,9 @@ from flask_security import hash_password
 app = create_app()
 app.app_context().push()
 
-from application.cache_config import make_cache
-import application.celery_task
-from application.celery_config import create_celery_inst
+from cache_config import make_cache
+# import application.celery_task
+from celery_config import create_celery_inst
 
 celery = create_celery_inst(app)
 cache = make_cache(app)

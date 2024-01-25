@@ -48,8 +48,8 @@ def create_app():
         "/api/playlist/new",
         "/api/playlist/<int:id>/edit",
         "/api/playlist/<int:playlist_id>/remove/<int:song_id>",
-        "/api/remove/playlist/<int:playlist_id>",
     )
+    api.add_resource(Common_Delete_Playlist_API, "/api/remove/playlist/<int:playlist_id>")
     api.add_resource(Common_Search_API, "/api/search/song")
     api.add_resource(Common_Creator_Avg_Rating_API, "/api/creator/<string:name>/rating")
     api.add_resource(Common_Song_Play_API, "/api/play/song/<int:id>")
@@ -67,6 +67,7 @@ def create_app():
         Melophile_Add_Song_Playlist_API,
         "/api/playlist/<int:playlist_id>/add/<int:song_id>",
     )
+    api.add_resource(Search_API, "/api/search")
     app.security = Security(app, user_datastore)
     api.init_app(app)
     CORS(app)
