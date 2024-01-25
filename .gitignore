@@ -41,3 +41,6 @@ backend/static/Test_Songs/Tobu - If I Disappear (ft. Tom Mårtensson) [NCS Relea
 backend/static/Test_Songs/Tollef - Take Our Time [NCS Release].mp3
 backend/static/Test_Songs/Wiguez - Gone (Feat. Rico 56) (Thorne Remix) [NCS Release].mp3
 backend/static/Test_Songs/Wiguez - Pressure (Fectro Remix) [NCS Release].mp3
+backend/celerybeat-schedule.bak
+backend/celerybeat-schedule.dir
+backend/celerybeat-schedule.dat
