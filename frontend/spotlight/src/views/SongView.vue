@@ -179,8 +179,11 @@ export default {
             await fetch(__API_URL__ + 'albums?creator_name=' + localStorage.getItem("username"), { headers: headers, 'method': 'GET' })
                 .then(response => { return response.json() })
                 .then(data => {
-                    let res = JSON.parse(data);
-                    for (const obj in res) { creator_albums.push(res[obj].album_name) }
+                    let res = data;
+                    if (res != "No albums found") {
+                        res = JSON.parse(res);
+                        for (const obj in res) { creator_albums.push(res[obj].album_name) }
+                    }
                 })
             if (creator_albums.includes(this.album_name)) { this.delete_flag = true; }
         }

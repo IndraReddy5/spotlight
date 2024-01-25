@@ -79,7 +79,7 @@ class Songs(db.Model):
     song_flags = db.relationship(
         "SongsFlagged",
         foreign_keys="SongsFlagged.song_id",
-        backref=db.backref("song_info"),
+        backref=db.backref("flag_song_info"),
     )
     playlists = db.relationship("PlaylistSongs", backref="song_info")
 

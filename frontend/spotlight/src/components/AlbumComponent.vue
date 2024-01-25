@@ -8,7 +8,7 @@
                     <path
                         d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z" />
                 </svg></div>
-            <div class="pt-2 ps-1">{{ AlbumName }}</div>
+            <div class="pt-2 ps-1"><a :href=generateAlbumUrl(AlbumID)>{{ AlbumName }}</a></div>
             <div class="pt-1 ps-1 pb-3 AlbumComponentSecondary"> <strong><em>{{ AlbumCreator }}</em></strong></div>
         </div>
     </div>
@@ -20,10 +20,14 @@ export default {
         AlbumName: String,
         AlbumCreator: String,
         imageSource: String,
+        AlbumID: String,
     },
     methods: {
         generateUrl(src) {
             return __BACKEND_URL__ + "static/Album_Images/" + src;
+        },
+        generateAlbumUrl(aid) {
+            return "/album/" + aid;
         }
     }
 }

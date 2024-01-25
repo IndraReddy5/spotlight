@@ -167,9 +167,10 @@ class Admin_Flags_API(Resource):
         album_flags = AlbumsFlagged.query.filter_by(admin_read=False).all()
         if song_flags:
             for flag in song_flags:
+                
                 return_json["songs"][flag.id] = {
                     "song_id": flag.song_id,
-                    "song_name": flag.song_info.name,
+                    "song_name": flag.flag_song_info.name,
                     "flagged_by": flag.melophile_id,
                     "flagged_by_name": flag.user_info.username,
                     "reason": flag.reason,
