@@ -6,3 +6,38 @@ backend/application/__pycache__/
 backend/db_directory/
 backend/static/*
 project_log.md
+backend/static/lock-icon.png
+backend/celery_task.py
+backend/static/lock-icon.png
+backend/static/Test_Album_Cover_Images/everything-1586954477-cCET17ui2u.jpg
+backend/static/Test_Album_Cover_Images/getaway-1697155249-ZKilSbNXEi.jpg
+backend/static/Test_Album_Cover_Images/pressure-fectro-remix-1692835292-QzsG0VBZs7.jpg
+backend/static/Test_Album_Song_Cover_Images/1696583182_QUThTOGvco_Final.jpg
+backend/static/Test_Album_Song_Cover_Images/1698141643_Ei0ENTsgvb_DONT-UNDERSTAND---SKETCHEZ---FINAL.png
+backend/static/Test_Album_Song_Cover_Images/closer-1691625650-ZMrhyher8R.jpg
+backend/static/Test_Album_Song_Cover_Images/cricket-we-nice-1697673648-TXcEQeUxy3.jpg
+backend/static/Test_Album_Song_Cover_Images/fly-away-1586946686-8NxFljjQBy.jpg
+backend/static/Test_Album_Song_Cover_Images/if-i-disappear-1651831235-G4FMMkdnmR.png
+backend/static/Test_Album_Song_Cover_Images/lazy_panda_4x.jpg
+backend/static/Test_Album_Song_Cover_Images/old-monk_-_alwin.jpeg
+backend/static/Test_Album_Song_Cover_Images/running-away-1649325635-ZD22SgM4sM.jpg
+backend/static/Test_Album_Song_Cover_Images/slow-down-1641294039-Imxo6qzcGg.jpg
+backend/static/Test_Album_Song_Cover_Images/take-our-time-1645534832-FSOxrdKCfV.jpg
+backend/static/Test_Lyrics/lyrics1.txt
+backend/static/Test_Lyrics/lyrics2.txt
+backend/static/Test_Lyrics/lyrics3.txt
+backend/static/Test_Songs/AC13 - Waves Ft. Comma Dee [NCS Release].mp3
+backend/static/Test_Songs/Chime - Phototropic [NCS Release].mp3
+backend/static/Test_Songs/Daniel Levi - River [NCS Release].mp3
+backend/static/Test_Songs/Daniel Levi - That's What Makes It Right [NCS Release].mp3
+backend/static/Test_Songs/Diamond Eyes - Everything [NCS Release].mp3
+backend/static/Test_Songs/Jim Yosef & Shiah Maisel - Slow Down [NCS Release].mp3
+backend/static/Test_Songs/Krys Talk - Fly Away [NCS Release].mp3
+backend/static/Test_Songs/ORGAN - Cricket (we nice) [NCS Release].mp3
+backend/static/Test_Songs/ROY KNOX - Closer [NCS Release].mp3
+backend/static/Test_Songs/Shiah Maisel, Abstrakt, Perk Pietrek - Running Away [NCS Release].mp3
+backend/static/Test_Songs/Sketchez - Don't Understand [NCS Release].mp3
+backend/static/Test_Songs/Tobu - If I Disappear (ft. Tom Mårtensson) [NCS Release].mp3
+backend/static/Test_Songs/Tollef - Take Our Time [NCS Release].mp3
+backend/static/Test_Songs/Wiguez - Gone (Feat. Rico 56) (Thorne Remix) [NCS Release].mp3
+backend/static/Test_Songs/Wiguez - Pressure (Fectro Remix) [NCS Release].mp3
