@@ -5,4 +5,3 @@
 - node version - 20.0.0
 - npm version - 9.7.2
 - nvm version - 0.39.3
-- nvm version - 0.39.3
