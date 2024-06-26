@@ -1,4 +1,4 @@
-## SpotLight
+# SpotLight
 
 - python version - 3.11.4
 - pip version - 23.2.1
